@@ -19,7 +19,7 @@ export default function Navbar() {
   // Track scrolling to highlight current section
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["hero", "work", "process", "contact"];
+      const sections = ["hero", "process", "contact"];
       const scrollPos = window.scrollY + 350; // offset trigger
 
       for (const section of sections) {
@@ -119,11 +119,19 @@ export default function Navbar() {
               {t('nav.home')}
             </a>
             <a
-              href="javascript:void(0)"
-              onClick={(e) => handleLinkClick(e, "work")}
+              href="/work"
+              onClick={(e) => {
+                if (pathname === "/work") {
+                  e.preventDefault();
+                } else {
+                  e.preventDefault();
+                  router.push("/work");
+                }
+                playClickSound();
+              }}
               onMouseEnter={playHoverSound}
               className={`text-[9px] sm:text-xs font-mono font-semibold tracking-widest rounded-full px-4 sm:px-5 py-1.5 sm:py-2 uppercase transition-all duration-300 ${
-                pathname === "/" && activeSection === "work"
+                pathname.startsWith("/work")
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "text-black/60 dark:text-white/50 hover:text-black dark:hover:text-white"
               }`}
@@ -151,11 +159,19 @@ export default function Navbar() {
               {t('nav.about')}
             </a>
             <a
-              href="javascript:void(0)"
-              onClick={(e) => handleLinkClick(e, "contact")}
+              href="/contact"
+              onClick={(e) => {
+                if (pathname === "/contact") {
+                  e.preventDefault();
+                } else {
+                  e.preventDefault();
+                  router.push("/contact");
+                }
+                playClickSound();
+              }}
               onMouseEnter={playHoverSound}
               className={`text-[9px] sm:text-xs font-mono font-semibold tracking-widest rounded-full px-4 sm:px-5 py-1.5 sm:py-2 uppercase transition-all duration-300 ${
-                pathname === "/" && activeSection === "contact"
+                pathname === "/contact"
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "text-black/60 dark:text-white/50 hover:text-black dark:hover:text-white"
               }`}
@@ -251,8 +267,16 @@ export default function Navbar() {
 
         {/* Right Side: Start Project CTA */}
         <a
-          href="javascript:void(0)"
-          onClick={(e) => handleLinkClick(e, "contact")}
+          href="/contact"
+          onClick={(e) => {
+            if (pathname === "/contact") {
+              e.preventDefault();
+            } else {
+              e.preventDefault();
+              router.push("/contact");
+            }
+            playClickSound();
+          }}
           onMouseEnter={playHoverSound}
           className="group hidden md:flex items-center gap-3 pl-6 pr-1.5 py-1.5 rounded-full border border-white/50 dark:border-white/10 hover:border-[#c19c5c]/40 dark:hover:border-[#c19c5c]/40 text-[10px] sm:text-xs font-mono font-semibold tracking-widest text-black dark:text-white bg-white/40 dark:bg-black/40 backdrop-blur-xl backdrop-saturate-150 hover:bg-white/60 dark:hover:bg-[#c19c5c]/20 transition-all duration-300 cursor-pointer shadow-lg shadow-black/5"
         >

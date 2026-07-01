@@ -44,17 +44,8 @@ export const AudioProvider = ({ children }) => {
         });
       }
       
-      // Try playing immediately on load (in case browser autoplay permission is already granted)
-      if (!isMuted) {
-        bgmRef.current.play()
-          .then(() => {
-            setIsAudioActive(true);
-          })
-          .catch(() => {
-            setIsAudioActive(false);
-            console.log("Autoplay blocked by browser. Music will start immediately on first user interaction.");
-          });
-      }
+      // Do not autoplay on load. Wait for the user to interact first.
+      setIsAudioActive(false);
     }
 
     // Broad range of user gestures to unlock audio immediately

@@ -4,7 +4,9 @@ import { AudioProvider } from "@/context/AudioContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import ThreeCanvas from "@/components/ThreeCanvas";
+import SmoothScroll from "@/components/SmoothScroll";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,9 +48,9 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} antialiased`}
     >
-      <body className="min-h-full bg-[#f5f5f7] text-[#121214] dark:bg-[#070708] dark:text-[#f5f5f7] flex flex-col font-sans transition-colors duration-300">
+      <body className="bg-[#f5f5f7] text-[#121214] dark:bg-[#070708] dark:text-[#f5f5f7] flex flex-col font-sans transition-colors duration-300">
         <LanguageProvider>
           <ThemeProvider>
             <AudioProvider>
@@ -61,10 +63,15 @@ export default function RootLayout({ children }) {
               {/* Glassmorphic Navbar */}
               <Navbar />
               
-              {/* Main content layer */}
-              <main className="relative z-10 flex-grow">
-                {children}
-              </main>
+              <SmoothScroll>
+                {/* Main Content */}
+                <main className="relative z-10 flex-grow">
+                  {children}
+                </main>
+
+                {/* Global Footer */}
+                <Footer />
+              </SmoothScroll>
             </AudioProvider>
           </ThemeProvider>
         </LanguageProvider>

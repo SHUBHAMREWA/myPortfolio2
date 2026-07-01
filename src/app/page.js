@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAudio } from "@/context/AudioContext";
+import { projectsData } from "@/data/projectsData";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
   ArrowDown, 
@@ -21,10 +23,13 @@ import {
 import confetti from "canvas-confetti";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useTheme } from "@/context/ThemeContext";
+import LiquidText from "@/components/LiquidText";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
+  const router = useRouter();
   const { playHoverSound, playClickSound, playSuccessSound } = useAudio();
   const { t } = useLanguage();
   const [activeChapter, setActiveChapter] = useState(0);
@@ -53,6 +58,28 @@ export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
 
+
+  const { theme } = useTheme();
+  const [fontSize, setFontSize] = useState(160);
+
+  // Responsive font size tracking for WebGL Canvas rendering
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setFontSize(80);
+      } else if (window.innerWidth < 768) {
+        setFontSize(110);
+      } else if (window.innerWidth < 1024) {
+        setFontSize(140);
+      } else {
+        setFontSize(180);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Update clock coordinates (Rewa, India Time - IST)
   useEffect(() => {
@@ -196,41 +223,12 @@ export default function Home() {
     }
   ];
 
-  const projects = [
-    {
-      title: t('projects.project1Title'),
-      category: t('projects.project1Category'),
-      image: "/project1.png",
-      year: "2025",
-      desc: t('projects.project1Desc')
-    },
-    {
-      title: t('projects.project2Title'),
-      category: t('projects.project2Category'),
-      image: "/project2.png",
-      year: "2025",
-      desc: t('projects.project2Desc')
-    },
-    {
-      title: t('projects.project3Title'),
-      category: t('projects.project3Category'),
-      image: "/project3.png",
-      year: "2026",
-      desc: t('projects.project3Desc')
-    },
-    {
-      title: t('projects.project4Title'),
-      category: t('projects.project4Category'),
-      image: "/project4.png",
-      year: "2026",
-      desc: t('projects.project4Desc')
-    }
-  ];
-
   const heroRef = useRef(null);
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const scrollIndicatorRef = useRef(null);
+
+
 
   return (
     <div ref={heroRef} className="w-full relative z-10">
@@ -254,9 +252,19 @@ export default function Home() {
             </span>
             
             {/* "SHUBHAM." */}
-            <h1 className="font-serif text-[18vw] sm:text-[140px] md:text-[180px] lg:text-[220px] font-medium tracking-tighter text-black dark:text-white leading-[0.8] uppercase m-0 p-0 relative z-0">
-              {t('hero.shubham')}
-            </h1>
+            <div className="relative z-0 select-none max-w-full">
+              <LiquidText
+                text={t('hero.shubham')}
+                fontSize={fontSize}
+                fontWeight="500"
+                fontFamily="'Cormorant Garamond', serif"
+                color={theme === "dark" ? "#ffffff" : "#121214"}
+                waveIntensity={1.0}
+                waveRadius={0.25}
+                waveSpeed={4.0}
+                hoverStrength={1.0}
+              />
+            </div>
           </div>
 
           {/* Subtext block - "I like building digital interfaces." */}
@@ -266,7 +274,7 @@ export default function Home() {
             <div className="flex flex-col gap-8 sm:gap-12">
               <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-black dark:text-white leading-none">
                 {t('hero.iLikeBuilding')} <br className="hidden sm:block" />
-                <span className="relative inline-block mt-0 sm:-mt-2">
+                <span className="relative inline-block mt-0 sm:-mt-2 ml-8 sm:ml-20">
                   <span className="font-serif italic font-normal tracking-normal pr-4">{t('hero.digitalInterfaces')}</span>
                   {/* Purple scribble underline */}
                   <svg className="absolute -bottom-2 sm:-bottom-3 left-0 w-full h-3 sm:h-5 text-[#8b5cf6]" viewBox="0 0 300 20" fill="none" preserveAspectRatio="none">
@@ -281,13 +289,13 @@ export default function Home() {
             </div>
 
             {/* Right side: Button and Location */}
-            <div className="flex flex-col items-start md:items-end gap-6 sm:gap-10 w-full md:w-auto">
+            <div className="flex flex-col items-center gap-6 sm:gap-8 w-full md:w-auto">
               <a
-                href="javascript:void(0)"
+                href="/contact"
                 onClick={(e) => {
                   e.preventDefault();
                   playClickSound();
-                  document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                  router.push("/contact");
                 }}
                 onMouseEnter={playHoverSound}
                 className="group relative overflow-hidden inline-flex items-center justify-center bg-black dark:bg-white border border-black dark:border-white rounded-[2rem] px-8 sm:px-10 py-4 sm:py-5 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105 shadow-xl shadow-black/10 dark:shadow-white/10 hover:shadow-[#8b5cf6]/20"
@@ -342,42 +350,56 @@ export default function Home() {
           <h2 className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-black/80 dark:text-white/80 uppercase">
             {t('projects.title')}
           </h2>
-          <a href="#" onMouseEnter={playHoverSound} onClick={(e) => { e.preventDefault(); playClickSound(); }} className="group text-[10px] sm:text-xs font-bold tracking-[0.2em] text-black/80 dark:text-white/80 uppercase hover:text-[#c19c5c] transition-colors flex items-center gap-2">
+          <a href="/work" onMouseEnter={playHoverSound} onClick={(e) => { e.preventDefault(); playClickSound(); router.push('/work'); }} className="group text-[10px] sm:text-xs font-bold tracking-[0.2em] text-black/80 dark:text-white/80 uppercase hover:text-[#c19c5c] transition-colors flex items-center gap-2">
             {t('projects.viewIndex')} <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
           </a>
         </div>
 
         {/* Project grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {projects.map((proj, index) => (
+          {projectsData.slice(0, 3).map((proj, index) => (
             <div 
-              key={index}
+              key={proj.id}
               data-cursor="view"
               onMouseEnter={playHoverSound}
-              onClick={playClickSound}
+              onClick={() => { playClickSound(); router.push(`/work/${proj.id}`); }}
               className="project-card group relative flex flex-col cursor-pointer"
             >
               {/* Image Container */}
               <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-[1rem] bg-neutral-100 dark:bg-neutral-900 border border-black/5 dark:border-white/5">
                 <img 
-                  src={proj.image} 
-                  alt={proj.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-105"
+                  src={proj.images[0]} 
+                  alt={t(proj.titleKey)}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-[0.95] group-hover:-translate-x-[10%]"
                 />
+                {/* Hover Details Overlay */}
+                <div className="absolute inset-y-0 right-0 w-3/5 sm:w-1/2 bg-white/95 dark:bg-black/90 backdrop-blur-md border-l border-black/10 dark:border-white/10 translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col justify-center p-6">
+                  <h4 className="text-black dark:text-white font-bold text-sm tracking-widest uppercase mb-3 line-clamp-2 leading-snug">
+                    {t(proj.titleKey)}
+                  </h4>
+                  <p className="text-black/70 dark:text-white/70 text-[10px] sm:text-xs leading-relaxed line-clamp-4 mb-6 font-medium">
+                    {t(proj.descKey)}
+                  </p>
+                  <div className="mt-auto">
+                    <span className="inline-flex items-center gap-2 text-[#c19c5c] text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase">
+                      Click to view <ArrowUpRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Info text */}
               <div className="mt-5 flex flex-col">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold tracking-[0.1em] text-black dark:text-white uppercase">
-                    {proj.title}
+                    {t(proj.titleKey)}
                   </h3>
                   <span className="text-[10px] font-bold tracking-[0.15em] text-black/50 dark:text-white/50 uppercase">
-                    {proj.category.split(" ")[0]} {/* Showing only first word for clean layout */}
+                    {t(proj.categoryKey).split(" ")[0]} {/* Showing only first word for clean layout */}
                   </span>
                 </div>
                 <p className="text-black/60 dark:text-white/60 font-medium text-xs mt-3 leading-relaxed truncate pr-4">
-                  {proj.desc}
+                  {t(proj.descKey)}
                 </p>
               </div>
             </div>
@@ -413,10 +435,10 @@ export default function Home() {
               <p className="text-xs text-black/50 dark:text-white/50 font-light mt-3 leading-relaxed">
                 {t('pricing.plan1Desc')}
               </p>
-              <div className="w-full h-[1px] bg-white/10 my-6" />
+              <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 my-6" />
               <div className="mb-6">
                 <span className="text-[10px] text-black/40 dark:text-white/40 font-mono tracking-widest block uppercase">{t('pricing.plan1WorkStruct')}</span>
-                <span className="text-2xl font-extrabold text-white mt-1 block tracking-wide">{t('pricing.plan1Agile')}</span>
+                <span className="text-2xl font-extrabold text-black dark:text-white mt-1 block tracking-wide">{t('pricing.plan1Agile')}</span>
               </div>
               <ul className="space-y-3.5 text-xs text-black/80 dark:text-white/80 font-light">
                 <li className="flex items-center gap-2.5">
@@ -438,15 +460,15 @@ export default function Home() {
               </ul>
             </div>
             <a
-              href="#contact"
+              href="/contact"
               onClick={(e) => {
                 e.preventDefault();
                 playClickSound();
                 setFormData(prev => ({ ...prev, engagement: "Full-Time Engineering" }));
-                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                router.push("/contact");
               }}
               onMouseEnter={playHoverSound}
-              className="mt-8 w-full py-3.5 rounded-xl border border-black/10 dark:border-white/10 hover:border-white/30 text-center text-xs font-semibold tracking-widest uppercase transition-all duration-300 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer"
+              className="mt-8 w-full py-3.5 rounded-xl border border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30 text-center text-xs font-semibold tracking-widest uppercase transition-all duration-300 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] text-black dark:text-white cursor-pointer"
             >
               {t('pricing.inquire')}
             </a>
@@ -465,7 +487,7 @@ export default function Home() {
               <p className="text-xs text-black/50 dark:text-white/50 font-light mt-3 leading-relaxed">
                 {t('pricing.plan2Desc')}
               </p>
-              <div className="w-full h-[1px] bg-white/10 my-6" />
+              <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 my-6" />
               <div className="mb-6">
                 <span className="text-[10px] text-black/40 dark:text-white/40 font-mono tracking-widest block uppercase">{t('pricing.plan2Method')}</span>
                 <span className="text-2xl font-extrabold text-[#c19c5c] mt-1 block tracking-wide">{t('pricing.plan2Milestone')}</span>
@@ -490,15 +512,14 @@ export default function Home() {
               </ul>
             </div>
             <a
-              href="#contact"
+              href="/contact"
               onClick={(e) => {
                 e.preventDefault();
                 playClickSound();
-                setFormData(prev => ({ ...prev, engagement: "Custom MVP Build" }));
-                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                router.push("/contact");
               }}
               onMouseEnter={playHoverSound}
-              className="mt-8 w-full py-3.5 rounded-xl border border-[#c19c5c]/40 hover:border-[#c19c5c] text-center text-xs font-semibold tracking-widest uppercase transition-all duration-300 bg-[#c19c5c]/10 text-white cursor-pointer"
+              className="mt-8 w-full py-3.5 rounded-xl border border-[#c19c5c]/40 hover:border-[#c19c5c] text-center text-xs font-semibold tracking-widest uppercase transition-all duration-300 bg-[#c19c5c]/10 text-[#c19c5c] dark:text-white cursor-pointer"
             >
               {t('pricing.secureCollab')}
             </a>
@@ -508,240 +529,9 @@ export default function Home() {
 
       </section>
 
-      {/* SECTION 5: CONTACT & FOOTER */}
-      <section id="contact" className="py-32 px-6 max-w-7xl mx-auto border-t border-black/[0.03] dark:border-white/[0.03] relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          
-          {/* Info Column */}
-          <div className="lg:col-span-5 flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-mono tracking-[0.3em] text-[#c19c5c] uppercase">{t('contact.tag')}</span>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-black dark:text-white mt-3 uppercase leading-none">
-                {t('contact.startA')} <span className="font-serif italic lowercase font-light text-[#c19c5c]">{t('contact.conversation')}</span>
-              </h2>
-              <p className="text-black/60 dark:text-white/60 text-sm font-light mt-6 leading-relaxed max-w-md">
-                {t('contact.desc')}
-              </p>
+      {/* SECTION 5: CONTACT & FOOTER removed, now handled by /contact route and global layout */}
 
-              {/* Contacts info list */}
-              <div className="mt-10 space-y-6 text-xs font-light text-black/80 dark:text-white/80">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <MapPin className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-mono uppercase">{t('contact.location')}</span>
-                    <span className="block">{t('contact.locationValue')}</span>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-mono uppercase">{t('contact.localTime')}</span>
-                    <span className="block">{currentTime || "Loading..."}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Mail className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-mono uppercase">{t('contact.directEmail')}</span>
-                    <a href="mailto:shubhamrewamp17@gmail.com" className="hover:text-[#c19c5c] transition-colors duration-200">shubhamrewamp17@gmail.com</a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Phone className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-mono uppercase">{t('contact.phoneContact')}</span>
-                    <a href="tel:+917898522932" className="hover:text-[#c19c5c] transition-colors duration-200">+91 7898522932</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Social links */}
-            <div className="mt-12 pt-8 border-t border-black/5 dark:border-white/5">
-              <span className="block text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-4">{t('contact.profNetworks')}</span>
-              <div className="flex items-center gap-4">
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full border border-black/5 dark:border-white/5 hover:border-black/20 dark:border-white/20 text-black/50 dark:text-white/50 hover:text-white transition-all duration-300 flex items-center justify-center">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                  </svg>
-                </a>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full border border-black/5 dark:border-white/5 hover:border-black/20 dark:border-white/20 text-black/50 dark:text-white/50 hover:text-white transition-all duration-300 flex items-center justify-center">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Column */}
-          <div className="lg:col-span-7">
-            <div className="glass-panel p-8 sm:p-10 rounded-2xl relative border border-black/5 dark:border-white/5">
-              {isSubmitted ? (
-                <div className="py-12 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#c19c5c]/10 border border-[#c19c5c]/30 flex items-center justify-center text-[#c19c5c] mb-6">
-                    <CheckCircle className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-black dark:text-white uppercase tracking-wider">{t('contact.successMsg')}</h3>
-                  <p className="text-black/60 dark:text-white/60 text-sm mt-3 max-w-sm font-light leading-relaxed">
-                    {t('contact.thankYou', { name: formData.name, engagement: formData.engagement })}
-                  </p>
-                  <button
-                    onClick={() => {
-                      playClickSound();
-                      setIsSubmitted(false);
-                      setFormData({ name: "", email: "", company: "", engagement: "Full-Time Engineering", message: "" });
-                    }}
-                    className="mt-8 px-6 py-3 rounded-xl border border-black/10 dark:border-white/10 hover:border-white/30 text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-black/5 dark:bg-white/5"
-                  >
-                    {t('contact.sendAnother')}
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleFormSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {/* Name */}
-                    <div className="flex flex-col">
-                      <label className="text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-2">{t('contact.formName')}</label>
-                      <input
-                        type="text"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder={t('contact.formNamePlh')}
-                        className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-[#c19c5c] rounded-xl px-4 py-3.5 text-xs text-white placeholder-black/30 dark:placeholder-white/20 outline-none transition-colors duration-300"
-                      />
-                    </div>
-                    {/* Email */}
-                    <div className="flex flex-col">
-                      <label className="text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-2">{t('contact.formEmail')}</label>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder={t('contact.formEmailPlh')}
-                        className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-[#c19c5c] rounded-xl px-4 py-3.5 text-xs text-white placeholder-black/30 dark:placeholder-white/20 outline-none transition-colors duration-300"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {/* Company */}
-                    <div className="flex flex-col">
-                      <label className="text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-2">{t('contact.formCompany')}</label>
-                      <input
-                        type="text"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        placeholder={t('contact.formCompanyPlh')}
-                        className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-[#c19c5c] rounded-xl px-4 py-3.5 text-xs text-white placeholder-black/30 dark:placeholder-white/20 outline-none transition-colors duration-300"
-                      />
-                    </div>
-                    {/* Engagement Select */}
-                    <div className="flex flex-col">
-                      <label className="text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-2">{t('contact.formEngagement')}</label>
-                      <select
-                        name="engagement"
-                        value={formData.engagement}
-                        onChange={handleInputChange}
-                        className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-[#c19c5c] rounded-xl px-4 py-3.5 text-xs text-black/80 dark:text-white/80 outline-none transition-colors duration-300 appearance-none cursor-pointer"
-                      >
-                        <option value="Full-Time Engineering" className="bg-[#fcfcfd] dark:bg-[#121214]">{t('contact.modelFullTime')}</option>
-                        <option value="Custom MVP Build" className="bg-[#fcfcfd] dark:bg-[#121214]">{t('contact.modelMVP')}</option>
-                        <option value="Technical Consultation" className="bg-[#fcfcfd] dark:bg-[#121214]">{t('contact.modelConsulting')}</option>
-                        <option value="Other Scope" className="bg-[#fcfcfd] dark:bg-[#121214]">{t('contact.modelOther')}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Project message */}
-                  <div className="flex flex-col">
-                    <label className="text-[9px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-2">{t('contact.formMessage')}</label>
-                    <textarea
-                      name="message"
-                      rows="4"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      placeholder={t('contact.formMessagePlh')}
-                      className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-[#c19c5c] rounded-xl px-4 py-3.5 text-xs text-white placeholder-black/30 dark:placeholder-white/20 outline-none transition-colors duration-300 resize-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    onMouseEnter={playHoverSound}
-                    className="w-full py-4 rounded-xl bg-[#c19c5c] hover:bg-[#b08d4f] text-black dark:text-white text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#c19c5c]/10"
-                  >
-                    {t('contact.submit')}
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* New Minimal Footer */}
-        <div className="mt-32 pt-16 border-t border-black/10 dark:border-white/10 pb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-12 md:gap-4">
-            
-            {/* Left: Copyright & Location */}
-            <div className="flex flex-col gap-3">
-              <span className="text-xs font-bold tracking-[0.2em] text-black/80 dark:text-white/80 uppercase">
-                &copy; 2026 SHUBHAM KUSHWAHA &trade;
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></span>
-                <span className="text-[10px] font-bold tracking-[0.25em] text-black/50 dark:text-white/50 uppercase">
-                  REWA, INDIA
-                </span>
-              </div>
-            </div>
-
-            {/* Middle: Social Links */}
-            <div className="flex flex-col gap-6 md:-ml-12">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-black/40 dark:text-white/40 uppercase">
-                CONNECT_GALLERY
-              </span>
-              <div className="grid grid-cols-2 gap-x-16 gap-y-4">
-                <a href="#" className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase">LINKEDIN</a>
-                <a href="#" className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase">GITHUB</a>
-                <a href="#" className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase">BEHANCE</a>
-                <a href="#" className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase">DRIBBBLE</a>
-                <a href="#" className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase">INSTAGRAM</a>
-              </div>
-            </div>
-
-            {/* Right: Availability */}
-            <div className="flex flex-col items-start md:items-end gap-2 text-left md:text-right">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-black/40 dark:text-white/40 uppercase">
-                AVAILABILITY
-              </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium tracking-tight text-black dark:text-white uppercase leading-[1.1]">
-                OPEN FOR <br/> COLLABORATIONS
-              </h2>
-            </div>
-          </div>
-          
-          {/* Bottom Bar line */}
-          <div className="w-full h-[1px] bg-black/10 dark:bg-white/10 mt-12" />
-        </div>
-      </section>
 
     </div>
   );

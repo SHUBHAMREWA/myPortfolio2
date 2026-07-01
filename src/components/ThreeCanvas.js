@@ -5,6 +5,7 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "@/context/ThemeContext";
+import { usePathname } from "next/navigation";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -27,6 +28,7 @@ const atmFrag = `
 
 export default function ThreeCanvas() {
   const { theme } = useTheme();
+  const pathname = usePathname();
   const canvasRef  = useRef(null);
   const themeRef   = useRef(theme);
 
@@ -322,6 +324,8 @@ export default function ThreeCanvas() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount
+
+  if (pathname !== "/") return null;
 
   return (
     <div
