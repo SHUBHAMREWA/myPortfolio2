@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ThreeCanvas from "@/components/ThreeCanvas";
 import SmoothScroll from "@/components/SmoothScroll";
+import WaterRipple from "@/components/WaterRipple";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,6 +60,9 @@ export default function RootLayout({ children }) {
               
               {/* Interactive WebGL Scene */}
               <ThreeCanvas />
+
+              {/* Global Water Ripple Effect */}
+              <WaterRipple />
               
               {/* Glassmorphic Navbar */}
               <Navbar />
