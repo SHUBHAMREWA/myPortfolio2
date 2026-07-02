@@ -32,6 +32,17 @@ export default function ThreeCanvas() {
   const canvasRef  = useRef(null);
   const themeRef   = useRef(theme);
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 768);
+      const handleResize = () => setIsMobile(window.innerWidth < 768);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
   // Keep themeRef in sync so the animation loop reads latest theme
   useEffect(() => { themeRef.current = theme; }, [theme]);
 
@@ -48,12 +59,14 @@ export default function ThreeCanvas() {
       powerPreference: "high-performance",
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+    const startW = canvas.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
+    const startH = canvas.clientHeight || (typeof window !== "undefined" ? window.innerHeight : 600);
+    renderer.setSize(startW, startH, false);
     renderer.setClearColor(0x000000, 0);  // fully transparent
 
     /* ── Scene / Camera ───────────────────────────────────────── */
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(45, startW / startH, 0.1, 100);
     camera.position.set(0, 0, 4.8);
 
     /* ── Lighting ─────────────────────────────────────────────── */
@@ -80,7 +93,19 @@ export default function ThreeCanvas() {
     const pivot = new THREE.Group();
     pivot.rotation.y = 0;       // no initial pivot Y rotation
     pivot.rotation.x = 0.35;   // slight upward tilt for latitude
-    pivot.position.x = 2.8;    // fully right side
+    
+    // Set responsive initial position and scale
+    const widthVal = typeof window !== "undefined" ? window.innerWidth : 1200;
+    if (widthVal < 768) {
+      pivot.position.set(0.0, -0.45, 0);
+      pivot.scale.set(0.68, 0.68, 0.68);
+    } else if (widthVal < 1024) {
+      pivot.position.set(1.25, -0.15, 0);
+      pivot.scale.set(0.85, 0.85, 0.85);
+    } else {
+      pivot.position.set(2.8, 0.0, 0);
+      pivot.scale.set(1.0, 1.0, 1.0);
+    }
     scene.add(pivot);
 
     /* ── Earth sphere ─────────────────────────────────────────── */
@@ -249,22 +274,43 @@ export default function ThreeCanvas() {
         trigger: "body", start: "top top", end: "bottom bottom", scrub: 1.4,
       },
     });
-    scrollTl
-      .to(pivot.position, { x: 2.5, y: -0.2, duration: 1 })
-      .to(pivot.scale,    { x: 0.65, y: 0.65, z: 0.65, duration: 1 }, "<")
-      .to(pivot.position, { x: -1.5, y: -0.3, duration: 1 })
-      .to(pivot.scale,    { x: 0.78, y: 0.78, z: 0.78, duration: 1 }, "<")
-      .to(pivot.position, { x: 0.0, y: 0.2, duration: 1 })
-      .to(pivot.scale,    { x: 0.48, y: 0.48, z: 0.48, duration: 1 }, "<");
+    
+    if (widthVal < 768) {
+      scrollTl
+        .to(pivot.position, { x: 0, y: -0.5, duration: 1 })
+        .to(pivot.scale,    { x: 0.52, y: 0.52, z: 0.52, duration: 1 }, "<")
+        .to(pivot.position, { x: 0, y: -0.4, duration: 1 })
+        .to(pivot.scale,    { x: 0.62, y: 0.62, z: 0.62, duration: 1 }, "<")
+        .to(pivot.position, { x: 0, y: -0.1, duration: 1 })
+        .to(pivot.scale,    { x: 0.4, y: 0.4, z: 0.4, duration: 1 }, "<");
+    } else if (widthVal < 1024) {
+      scrollTl
+        .to(pivot.position, { x: 1.1, y: -0.15, duration: 1 })
+        .to(pivot.scale,    { x: 0.65, y: 0.65, z: 0.65, duration: 1 }, "<")
+        .to(pivot.position, { x: -0.8, y: -0.25, duration: 1 })
+        .to(pivot.scale,    { x: 0.72, y: 0.72, z: 0.72, duration: 1 }, "<")
+        .to(pivot.position, { x: 0.0, y: 0.15, duration: 1 })
+        .to(pivot.scale,    { x: 0.48, y: 0.48, z: 0.48, duration: 1 }, "<");
+    } else {
+      scrollTl
+        .to(pivot.position, { x: 2.5, y: -0.2, duration: 1 })
+        .to(pivot.scale,    { x: 0.65, y: 0.65, z: 0.65, duration: 1 }, "<")
+        .to(pivot.position, { x: -1.5, y: -0.3, duration: 1 })
+        .to(pivot.scale,    { x: 0.78, y: 0.78, z: 0.78, duration: 1 }, "<")
+        .to(pivot.position, { x: 0.0, y: 0.2, duration: 1 })
+        .to(pivot.scale,    { x: 0.48, y: 0.48, z: 0.48, duration: 1 }, "<");
+    }
 
     /* ── Resize handler ───────────────────────────────────────── */
     const onResize = () => {
-      const w = canvas.clientWidth, h = canvas.clientHeight;
+      const w = canvas.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
+      const h = canvas.clientHeight || (typeof window !== "undefined" ? window.innerHeight : 600);
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     };
     window.addEventListener("resize", onResize);
+    onResize(); // Call once initially to guarantee correct size on mount
 
     /* ── Animation loop ───────────────────────────────────────── */
     let rafId;
@@ -334,8 +380,12 @@ export default function ThreeCanvas() {
       style={{
         background:
           theme === "dark"
-            ? "radial-gradient(ellipse 90% 90% at 70% 50%, #0d1525 0%, #070708 100%)"
-            : "radial-gradient(ellipse 90% 90% at 70% 50%, #e8ecf5 0%, #d5d5de 100%)",
+            ? (isMobile 
+                ? "radial-gradient(circle at 50% 70%, #0d1525 0%, #070708 100%)"
+                : "radial-gradient(ellipse 90% 90% at 70% 50%, #0d1525 0%, #070708 100%)")
+            : (isMobile
+                ? "radial-gradient(circle at 50% 70%, #e8ecf5 0%, #d5d5de 100%)"
+                : "radial-gradient(ellipse 90% 90% at 70% 50%, #e8ecf5 0%, #d5d5de 100%)"),
         pointerEvents: "none",
       }}
     >
@@ -352,14 +402,25 @@ export default function ThreeCanvas() {
         }}
       />
 
-      {/* Left-side fade so text stays readable */}
+      {/* Desktop left-to-right fade so text stays readable */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none hidden md:block"
         style={{
           background:
             theme === "dark"
               ? "linear-gradient(to right, #070708 30%, rgba(7,7,8,0.6) 52%, transparent 72%)"
               : "linear-gradient(to right, #d5d5de 25%, rgba(213,213,222,0.6) 50%, transparent 70%)",
+        }}
+      />
+
+      {/* Mobile top-to-bottom fade so header text stays readable */}
+      <div
+        className="absolute inset-0 pointer-events-none block md:hidden"
+        style={{
+          background:
+            theme === "dark"
+              ? "linear-gradient(to bottom, #070708 20%, rgba(7,7,8,0.5) 55%, transparent 85%)"
+              : "linear-gradient(to bottom, #d5d5de 20%, rgba(213,213,222,0.5) 55%, transparent 85%)",
         }}
       />
     </div>

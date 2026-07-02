@@ -31,8 +31,8 @@ export default function About() {
         {/* Photo Card */}
         <div className="bg-black rounded-3xl overflow-hidden relative min-h-[400px] lg:min-h-full group">
           <img 
-            src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop" 
-            alt="Coding Workspace"
+            src="/profile.png" 
+            alt="Profile Photo"
             className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700 group-hover:scale-105 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />

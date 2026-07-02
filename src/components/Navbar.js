@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAudio } from "@/context/AudioContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { Volume2, VolumeX, ArrowUpRight, Sun, Moon, Globe } from "lucide-react";
+import { Volume2, VolumeX, ArrowUpRight, Sun, Moon, Globe, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const { isMuted, isAudioActive, toggleMute, playHoverSound, playClickSound } = useAudio();
@@ -15,6 +15,12 @@ export default function Navbar() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("hero");
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Track scrolling to highlight current section
   useEffect(() => {
@@ -96,8 +102,8 @@ export default function Navbar() {
           </span>
         </a>
 
-        {/* Center Side: Capsule-style Navigation Menu */}
-        <div className="flex items-center gap-3">
+        {/* Center Side: Capsule-style Navigation Menu (hidden on mobile) */}
+        <div className="hidden md:flex items-center gap-3">
           {/* Audio blocked notification (only on wide screens) */}
           {!isAudioActive && !isMuted && (
             <span className="hidden xl:inline-block font-mono text-[9px] tracking-widest text-[#c19c5c] animate-pulse bg-white/60 dark:bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-black/5 dark:border-[#c19c5c]/10">
@@ -265,7 +271,19 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Right Side: Start Project CTA */}
+        {/* Mobile Menu Toggle Button (visible on mobile only) */}
+        <button
+          onClick={() => {
+            playClickSound();
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
+          className="relative z-50 md:hidden h-11 w-11 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 pointer-events-auto text-black dark:text-white hover:border-[#c19c5c]/40"
+          aria-label="Toggle mobile menu"
+        >
+          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
+        {/* Right Side: Start Project CTA (hidden on mobile) */}
         <a
           href="/contact"
           onClick={(e) => {
@@ -287,6 +305,122 @@ export default function Navbar() {
         </a>
 
       </div>
+
+      {/* Mobile Full-Screen Navigation Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-2xl flex flex-col justify-center items-center p-8 md:hidden pointer-events-auto transition-all duration-300">
+          
+          {/* Menu Header (Title) */}
+          <span className="text-[10px] font-mono tracking-[0.3em] text-[#c19c5c] uppercase mb-8">
+            Navigation Menu
+          </span>
+
+          {/* Navigation Links */}
+          <div className="flex flex-col items-center gap-6 mb-10">
+            {[
+              { label: t('nav.home'), href: "/", id: "hero", action: () => handleLinkClick({ preventDefault: () => {} }, "hero") },
+              { label: t('nav.work'), href: "/work" },
+              { label: t('nav.about'), href: "/about" },
+              { label: t('nav.contact'), href: "/contact" }
+            ].map((link, idx) => {
+              const isActive = pathname === link.href || (link.href === "/work" && pathname.startsWith("/work"));
+              return (
+                <a
+                  key={idx}
+                  href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    playClickSound();
+                    setMobileMenuOpen(false);
+                    if (link.id) {
+                      link.action();
+                    } else {
+                      router.push(link.href);
+                    }
+                  }}
+                  className={`text-xl font-bold tracking-[0.15em] uppercase transition-all duration-300 ${
+                    isActive
+                      ? "text-[#c19c5c] font-black border-b border-[#c19c5c] pb-1"
+                      : "text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Quick Divider line */}
+          <div className="w-12 h-[1px] bg-black/10 dark:bg-white/10 mb-8" />
+
+          {/* Settings controls container */}
+          <div className="flex items-center gap-6">
+            
+            {/* Sound Mute Toggle */}
+            <button
+              onClick={() => {
+                playClickSound();
+                toggleMute();
+              }}
+              className="p-3 rounded-full border border-black/10 dark:border-white/10 text-black dark:text-white cursor-pointer"
+              aria-label="Toggle mute"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4 text-black/40 dark:text-white/40" /> : <Volume2 className="w-4 h-4 text-[#c19c5c]" />}
+            </button>
+
+            {/* Dark/Light Mode Toggle */}
+            <button
+              onClick={() => {
+                playClickSound();
+                toggleTheme();
+              }}
+              className="p-3 rounded-full border border-black/10 dark:border-white/10 text-black dark:text-white cursor-pointer"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-[#c19c5c]" /> : <Moon className="w-4 h-4 text-black/75" />}
+            </button>
+
+            {/* Language Selector Dropdown inside mobile view */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setLangMenuOpen(!langMenuOpen);
+                }}
+                className="flex items-center gap-1.5 p-3 rounded-full border border-black/10 dark:border-white/10 text-black dark:text-white text-xs font-mono font-bold uppercase cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>{language}</span>
+              </button>
+
+              {langMenuOpen && (
+                <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col bg-white dark:bg-[#121214] border border-black/10 dark:border-white/10 rounded-lg p-1.5 shadow-2xl min-w-[110px] z-50">
+                  {[
+                    { code: 'en', label: 'English' },
+                    { code: 'hi', label: 'हिन्दी' },
+                    { code: 'ja', label: '日本語' }
+                  ].map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        playClickSound();
+                        changeLanguage(l.code);
+                        setLangMenuOpen(false);
+                      }}
+                      className={`text-center px-3 py-2 rounded-md text-[10px] font-mono tracking-wider transition-colors duration-200 ${language === l.code ? 'bg-[#c19c5c]/10 text-[#c19c5c] font-bold' : 'text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    >
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
     </header>
   );
 }

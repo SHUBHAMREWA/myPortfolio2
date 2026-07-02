@@ -65,14 +65,19 @@ export default function Home() {
   // Responsive font size tracking for WebGL Canvas rendering
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setFontSize(80);
-      } else if (window.innerWidth < 768) {
-        setFontSize(110);
-      } else if (window.innerWidth < 1024) {
-        setFontSize(140);
+      const w = window.innerWidth;
+      if (w < 380) {
+        setFontSize(45); // narrow mobile screens (e.g. iPhone SE)
+      } else if (w < 480) {
+        setFontSize(55); // standard mobile
+      } else if (w < 640) {
+        setFontSize(70); // wide mobile
+      } else if (w < 768) {
+        setFontSize(100); // small tablet
+      } else if (w < 1024) {
+        setFontSize(130); // large tablet
       } else {
-        setFontSize(180);
+        setFontSize(180); // desktop
       }
     };
     
@@ -234,8 +239,8 @@ export default function Home() {
     <div ref={heroRef} className="w-full relative z-10">
       
       {/* SECTION 1: HERO */}
-      <section id="hero" className="min-h-screen flex flex-col justify-between pt-24 pb-8 px-6 max-w-7xl mx-auto">
-        <div className="flex-grow flex flex-col justify-center max-w-5xl">
+      <section id="hero" className="min-h-[80vh] sm:min-h-screen flex flex-col justify-between pt-16 sm:pt-24 pb-8 px-6 max-w-7xl mx-auto">
+        <div className="flex-grow flex flex-col justify-start pt-4 sm:pt-0 sm:justify-center max-w-5xl">
           
           {/* Top Name */}
           <div className="w-full flex justify-start mb-6 sm:mb-10">
@@ -315,7 +320,7 @@ export default function Home() {
         </div>
 
         {/* Hero Footer with scroll indicator and client list */}
-        <div ref={scrollIndicatorRef} className="border-t border-black/10 dark:border-white/10 pt-8 mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div ref={scrollIndicatorRef} className="border-t border-black/10 dark:border-white/10 pt-8 mt-6 sm:mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-2.5 text-xs text-black/40 dark:text-white/40 tracking-wider">
             <div className="w-1.5 h-1.5 bg-[#c19c5c] rounded-full animate-ping" />
             <span>{t('hero.scrollExplore')}</span>
