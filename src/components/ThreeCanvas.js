@@ -36,6 +36,7 @@ export default function ThreeCanvas() {
   useEffect(() => { themeRef.current = theme; }, [theme]);
 
   useEffect(() => {
+    if (pathname !== "/") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -323,7 +324,7 @@ export default function ThreeCanvas() {
       window.removeEventListener("resize",      onResize);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
+  }, [pathname]); // run on pathname change
 
   if (pathname !== "/") return null;
 

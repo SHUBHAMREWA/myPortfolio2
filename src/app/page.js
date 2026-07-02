@@ -252,7 +252,7 @@ export default function Home() {
             </span>
             
             {/* "SHUBHAM." */}
-            <div className="relative z-0 select-none max-w-full">
+            <div className="relative z-0 select-none max-w-full -mt-4 sm:-mt-8 md:-mt-12 -mb-4 sm:-mb-6 md:-mb-8">
               <LiquidText
                 text={t('hero.shubham')}
                 fontSize={fontSize}
@@ -268,7 +268,7 @@ export default function Home() {
           </div>
 
           {/* Subtext block - "I like building digital interfaces." */}
-          <div className="mt-6 sm:mt-10 md:mt-12 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
+          <div className="mt-3 sm:mt-4 md:mt-6 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
             
             {/* Left side: Subtitle and Role */}
             <div className="flex flex-col gap-8 sm:gap-12">
