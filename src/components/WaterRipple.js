@@ -69,7 +69,7 @@ export default function WaterRipple() {
             baseFrequency="0.02 0.03"
             numOctaves="2"
             result="noise"
-            seed={Math.floor(Math.random() * 100)}
+            seed={1}
           />
           <feDisplacementMap
             in="SourceGraphic"
