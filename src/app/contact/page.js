@@ -9,7 +9,8 @@ import {
   MapPin,
   Clock,
   Mail,
-  Phone
+  Phone,
+  ArrowUpRight
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -27,6 +28,24 @@ export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    const card = e.currentTarget;
+    const box = card.getBoundingClientRect();
+    const x = e.clientX - box.left - box.width / 2;
+    const y = e.clientY - box.top - box.height / 2;
+    
+    const factor = 12; // Adjust tilt sensitivity
+    const rotateX = -y / (box.height / 2) * factor;
+    const rotateY = x / (box.width / 2) * factor;
+    
+    setTilt({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -89,82 +108,38 @@ export default function Contact() {
   }, []);
 
   return (
-    <div className="w-full relative z-10 min-h-[calc(100vh-300px)] pt-32 pb-12 px-6 max-w-7xl mx-auto flex flex-col justify-center">
+    <div className="w-full relative z-10 min-h-[calc(100vh-300px)] pt-32 pb-12 px-6 max-w-7xl mx-auto flex flex-col justify-center gap-12">
       
-      <section className="py-20 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          
-          {/* Info Column */}
-          <div className="lg:col-span-5 flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-mono tracking-[0.3em] text-[#c19c5c] uppercase">{t('contact.tag')}</span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-black dark:text-white mt-3 uppercase leading-none">
-                {t('contact.startA')} <span className="font-serif italic lowercase font-light text-[#c19c5c]">{t('contact.conversation')}</span>
-              </h1>
-              <p className="text-black/60 dark:text-white/60 text-sm font-medium mt-6 leading-relaxed max-w-md">
-                {t('contact.desc')}
-              </p>
+      {/* 0. BRAND BANNER SECTION */}
+      <div className="bg-[#f9f9f8] dark:bg-neutral-900/50 rounded-3xl p-8 sm:p-12 md:p-16 flex flex-col lg:flex-row items-start lg:items-center justify-between border border-black/5 dark:border-white/5">
+        
+        {/* Left Side */}
+        <div className="flex flex-col mb-10 lg:mb-0">
+          <span className="text-[10px] font-bold tracking-[0.2em] text-black/50 dark:text-white/50 uppercase mb-6">
+            CONTACT
+          </span>
+          <h1 className="text-5xl sm:text-6xl md:text-[80px] lg:text-[100px] font-black tracking-tighter text-black dark:text-white uppercase leading-[0.85]">
+            LET'S WORK <br />
+            <span className="text-black/30 dark:text-white/30">TOGETHER.</span>
+          </h1>
+        </div>
 
-              {/* Contacts info list */}
-              <div className="mt-10 space-y-6 text-xs font-medium text-black/80 dark:text-white/80">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <MapPin className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-bold tracking-widest uppercase mb-1">{t('contact.location')}</span>
-                    <span className="block">{t('contact.locationValue')}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-bold tracking-widest uppercase mb-1">{t('contact.localTime')}</span>
-                    <span className="block">{currentTime || "Loading..."}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Mail className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-bold tracking-widest uppercase mb-1">{t('contact.directEmail')}</span>
-                    <a href="mailto:shubhamrewamp17@gmail.com" className="hover:text-[#c19c5c] transition-colors duration-200">shubhamrewamp17@gmail.com</a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex items-center justify-center text-[#c19c5c]">
-                    <Phone className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-black/40 dark:text-white/40 text-[9px] font-bold tracking-widest uppercase mb-1">{t('contact.phoneContact')}</span>
-                    <a href="tel:+917898522932" className="hover:text-[#c19c5c] transition-colors duration-200">+91 7898522932</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Social links */}
-            <div className="mt-12 pt-8 border-t border-black/5 dark:border-white/5">
-              <span className="block text-[9px] font-bold tracking-[0.2em] text-black/40 dark:text-white/40 uppercase mb-4">{t('contact.profNetworks')}</span>
-              <div className="flex items-center gap-4">
-                <a href="https://linkedin.com/in/shubham-kushwaha-rewa17" target="_blank" rel="noopener noreferrer" className="p-3 rounded-xl bg-white dark:bg-[#111111] border border-black/5 dark:border-white/5 hover:border-[#c19c5c] text-blue-600 transition-all duration-300 flex items-center justify-center shadow-sm">
-                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-                </a>
-                <a href="https://github.com/SHUBHAMREWA" target="_blank" rel="noopener noreferrer" className="p-3 rounded-xl bg-white dark:bg-[#111111] border border-black/5 dark:border-white/5 hover:border-[#c19c5c] text-black dark:text-white transition-all duration-300 flex items-center justify-center shadow-sm">
-                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-                </a>
-              </div>
-            </div>
+        {/* Right Side */}
+        <div className="flex flex-col items-start lg:items-end text-left lg:text-right max-w-sm">
+          <p className="text-sm sm:text-base md:text-lg text-black/60 dark:text-white/60 font-medium leading-relaxed mb-8">
+            Open for new opportunities and collaborations at the intersection of design and engineering.
+          </p>
+          <div className="border border-black/10 dark:border-white/10 bg-white/50 dark:bg-black/20 rounded-full px-5 py-2.5 text-[10px] font-bold tracking-[0.2em] text-black/70 dark:text-white/70 uppercase flex items-center justify-center">
+            REWA, INDIA
           </div>
+        </div>
+      </div>
 
-          {/* Form Column */}
-          <div className="lg:col-span-7">
+      <section className="py-10 relative">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+          
+          {/* Left Column: Form (lg:col-span-7) */}
+          <div className="lg:col-span-7 order-2 lg:order-1">
             <div className="bg-white dark:bg-[#111111] p-8 sm:p-12 rounded-3xl relative border border-black/5 dark:border-white/5 shadow-sm">
               {isSubmitted ? (
                 <div className="py-16 flex flex-col items-center text-center">
@@ -271,6 +246,67 @@ export default function Contact() {
                   </button>
                 </form>
               )}
+            </div>
+          </div>
+
+          {/* Right Column: 3D Stats Card (lg:col-span-5) */}
+          <div className="lg:col-span-5 flex items-center justify-center order-1 lg:order-2 w-full">
+            {/* Premium 3D Tilting Card */}
+            <div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+                transformStyle: "preserve-3d",
+                transition: tilt.x === 0 ? "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)" : "none"
+              }}
+              className="w-full aspect-[1.65] bg-gradient-to-br from-[#18181b] to-[#09090b] border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden select-none"
+            >
+              {/* Card Glow overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#c19c5c]/5 to-transparent pointer-events-none" />
+
+              {/* Card Header */}
+              <div className="flex justify-between items-start" style={{ transform: "translateZ(30px)" }}>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase">Shubham Kushwaha</h3>
+                  <p className="text-[10px] font-mono tracking-widest text-[#c19c5c] uppercase mt-1">Full Stack Developer</p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full text-[9px] font-bold text-green-400 uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                  Open
+                </div>
+              </div>
+
+              {/* Card Stats */}
+              <div className="grid grid-cols-3 gap-2 my-2" style={{ transform: "translateZ(40px)" }}>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-black text-white">13+</div>
+                  <div className="text-[8px] font-mono tracking-wider text-white/45 uppercase mt-1">Projects</div>
+                </div>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-black text-white">1.6+</div>
+                  <div className="text-[8px] font-mono tracking-wider text-white/45 uppercase mt-1">Years Exp</div>
+                </div>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-black text-white">900+</div>
+                  <div className="text-[8px] font-mono tracking-wider text-white/45 uppercase mt-1">Commits</div>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="flex justify-between items-end" style={{ transform: "translateZ(30px)" }}>
+                <div className="text-[9px] sm:text-[10px] font-mono text-white/50 space-y-1.5">
+                  <p className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-[#c19c5c]" /> shubhamrewamp17@gmail.com</p>
+                  <p className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-[#c19c5c]" /> Rewa, India</p>
+                </div>
+                <a 
+                  href="mailto:shubhamrewamp17@gmail.com"
+                  className="w-10 h-10 rounded-full bg-[#f05537] hover:bg-[#d04527] flex items-center justify-center text-white transition-all duration-300 hover:scale-105 shadow-lg shadow-black/35"
+                >
+                  <ArrowUpRight className="w-5 h-5" />
+                </a>
+              </div>
+
             </div>
           </div>
         </div>
