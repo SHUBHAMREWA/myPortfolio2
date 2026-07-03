@@ -2,6 +2,8 @@
 
 import React from "react";
 import { Download, ArrowRight, Mail, Code, Terminal, Database, Server, Layers, Globe, Zap, CPU } from "lucide-react";
+import { BsOpenai, BsClaude } from "react-icons/bs";
+import { SiGooglegemini, SiN8N, SiReact, SiNextdotjs, SiNodedotjs, SiExpress, SiMongodb, SiTypescript, SiJavascript, SiTailwindcss, SiRedux, SiHtml5, SiCss3, SiVercel, SiNetlify, SiGit, SiJira } from "react-icons/si";
 import { useAudio } from "@/context/AudioContext";
 
 export default function About() {
@@ -10,6 +12,31 @@ export default function About() {
   return (
     <div className="w-full relative z-10 min-h-screen pt-32 pb-24 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6">
       
+      {/* 0. BRAND BANNER SECTION */}
+      <div className="bg-[#f9f9f8] dark:bg-neutral-900/50 rounded-3xl p-8 sm:p-12 md:p-16 flex flex-col lg:flex-row items-start lg:items-center justify-between border border-black/5 dark:border-white/5 mb-2">
+        
+        {/* Left Side */}
+        <div className="flex flex-col mb-10 lg:mb-0">
+          <span className="text-[10px] font-bold tracking-[0.2em] text-black/50 dark:text-white/50 uppercase mb-6">
+            THE HUMAN BEHIND THE SCREEN
+          </span>
+          <h1 className="text-6xl sm:text-7xl md:text-[90px] lg:text-[110px] font-black tracking-tighter text-black dark:text-white uppercase leading-[0.85]">
+            I BUILD <br />
+            FOR PEOPLE.
+          </h1>
+        </div>
+
+        {/* Right Side */}
+        <div className="flex flex-col items-start lg:items-end text-left lg:text-right max-w-sm">
+          <p className="text-sm sm:text-base md:text-lg text-black/60 dark:text-white/60 font-medium leading-relaxed mb-8">
+            I'm Shubham. I spend my time at the intersection of design, code, and how we actually think.
+          </p>
+          <div className="border border-black/10 dark:border-white/10 bg-white/50 dark:bg-black/20 rounded-full px-5 py-2.5 text-[10px] font-bold tracking-[0.2em] text-black/70 dark:text-white/70 uppercase flex items-center justify-center">
+            REWA, INDIA
+          </div>
+        </div>
+      </div>
+
       {/* 1. TOP SECTION: Intro & Photo */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
         
@@ -24,7 +51,7 @@ export default function About() {
             </h1>
           </div>
           <p className="text-black/60 dark:text-white/60 font-medium text-sm sm:text-base leading-relaxed max-w-md mt-12">
-            A results-driven developer with 1.5+ years of experience building scalable and user-focused web applications. Experienced in React.js, Node.js, and modern development practices, with a passion for optimizing performance and delivering high-quality software.
+            Dynamic Full-Stack Developer adept in React.js, Node.js, and Next.js with strong knowledge of TypeScript, Redux Toolkit, Tailwind CSS, and MongoDB. Demonstrated efficiency in migrating state management from Context API to Redux Toolkit, optimizing Core Web Vitals, and driving quality within Agile Scrum teams.
           </p>
         </div>
 
@@ -85,13 +112,24 @@ export default function About() {
             </div>
 
             {/* Edu 2 */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/5 dark:border-white/5 pb-6">
               <div>
                 <h3 className="text-lg font-serif font-bold text-black dark:text-white">Diploma, Electrical Eng.</h3>
                 <p className="text-xs text-black/50 dark:text-white/50 mt-1">Govt. Polytechnic College</p>
               </div>
               <span className="text-[10px] font-bold tracking-widest text-black/40 dark:text-white/40 bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full w-fit">
                 JUL 2019 - MAY 2021
+              </span>
+            </div>
+
+            {/* Edu 3 */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-lg font-serif font-bold text-black dark:text-white">Higher Secondary &amp; High School</h3>
+                <p className="text-xs text-black/50 dark:text-white/50 mt-1">Govt. Secondary School, Rewa</p>
+              </div>
+              <span className="text-[10px] font-bold tracking-widest text-black/40 dark:text-white/40 bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full w-fit">
+                APR 2017 - JUN 2019
               </span>
             </div>
 
@@ -109,36 +147,46 @@ export default function About() {
             </p>
 
             <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe className="w-4 h-4 text-black dark:text-white" />
-                  <span className="text-sm font-bold text-black dark:text-white">React &amp; Next.js</span>
+              {/* Frontend */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">Frontend Architecture</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiReact className="w-3 h-3 text-[#61DAFB]" /><span className="text-xs font-bold">React.js</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiNextdotjs className="w-3 h-3 text-black dark:text-white" /><span className="text-xs font-bold">Next.js</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiRedux className="w-3 h-3 text-[#764ABC]" /><span className="text-xs font-bold">Redux Toolkit</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiTailwindcss className="w-3 h-3 text-[#06B6D4]" /><span className="text-xs font-bold">Tailwind</span></div>
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">ADVANCED</span>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Server className="w-4 h-4 text-black dark:text-white" />
-                  <span className="text-sm font-bold text-black dark:text-white">Node.js &amp; Express</span>
+              {/* Backend & DB */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">Backend & Database</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiNodedotjs className="w-3 h-3 text-[#339933]" /><span className="text-xs font-bold">Node.js</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiExpress className="w-3 h-3 text-black dark:text-white" /><span className="text-xs font-bold">Express.js</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiMongodb className="w-3 h-3 text-[#47A248]" /><span className="text-xs font-bold">MongoDB</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><Globe className="w-3 h-3 text-black dark:text-white" /><span className="text-xs font-bold">RESTful APIs</span></div>
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">ADVANCED</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Database className="w-4 h-4 text-black dark:text-white" />
-                  <span className="text-sm font-bold text-black dark:text-white">MongoDB &amp; DBMS</span>
+              {/* Languages */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">Languages</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiJavascript className="w-3 h-3 text-[#F7DF1E]" /><span className="text-xs font-bold">JavaScript (ES6+)</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiTypescript className="w-3 h-3 text-[#3178C6]" /><span className="text-xs font-bold">TypeScript</span></div>
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">ADVANCED</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Code className="w-4 h-4 text-black dark:text-white" />
-                  <span className="text-sm font-bold text-black dark:text-white">JS &amp; TypeScript</span>
+              {/* DevOps & Tools */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">DevOps & Tools</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiGit className="w-3 h-3 text-[#F05032]" /><span className="text-xs font-bold">Git</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiVercel className="w-3 h-3 text-black dark:text-white" /><span className="text-xs font-bold">Vercel</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><SiJira className="w-3 h-3 text-[#0052CC]" /><span className="text-xs font-bold">Agile/Jira</span></div>
+                  <div className="bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-2"><Zap className="w-3 h-3 text-yellow-500" /><span className="text-xs font-bold">Socket.io</span></div>
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-black/40 dark:text-white/40 uppercase">ADVANCED</span>
               </div>
             </div>
           </div>
@@ -282,10 +330,19 @@ export default function About() {
               <span className="text-[10px] font-bold tracking-[0.2em] text-black/40 dark:text-white/40 uppercase block mb-6">
                 AI ORCHESTRATION
               </span>
-              <div className="flex gap-4 mb-6">
-                <div className="w-6 h-6 text-blue-500"><SparkleIcon /></div>
-                <div className="w-6 h-6 text-orange-500"><SparkleIcon /></div>
-                <div className="w-6 h-6 text-green-500"><SparkleIcon /></div>
+              <div className="flex gap-5 mb-6">
+                <div className="w-6 h-6 transition-transform hover:scale-110 text-black dark:text-white">
+                  <BsOpenai className="w-full h-full" />
+                </div>
+                <div className="w-6 h-6 transition-transform hover:scale-110 text-[#d97757]">
+                  <BsClaude className="w-full h-full" />
+                </div>
+                <div className="w-6 h-6 transition-transform hover:scale-110 text-[#8e75ff]">
+                  <SiGooglegemini className="w-full h-full" />
+                </div>
+                <div className="w-6 h-6 transition-transform hover:scale-110 text-[#ea4b71]">
+                  <SiN8N className="w-full h-full" />
+                </div>
               </div>
             </div>
             <p className="text-xs font-medium text-black/50 dark:text-white/50 leading-relaxed">
@@ -295,7 +352,9 @@ export default function About() {
 
           {/* Download Resume */}
           <a 
-            href="#"
+            href="https://drive.google.com/file/d/1enBo2Ozt8SKulZxdxmWDVa1Mf5PQOxAI/view?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
             onMouseEnter={playHoverSound}
             onClick={playClickSound}
             className="bg-[#111111] hover:bg-black dark:hover:bg-[#1a1a1a] rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-lg transition-colors group cursor-pointer border border-white/5"
@@ -314,12 +373,4 @@ export default function About() {
   );
 }
 
-// Simple abstract sparkle icon component since not all icons from lucide-react perfectly match AI logos
-function SparkleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2v20" />
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    </svg>
-  );
-}
+

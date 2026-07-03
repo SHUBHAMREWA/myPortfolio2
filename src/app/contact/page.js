@@ -25,6 +25,7 @@ export default function Contact() {
     message: ""
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
 
   const handleInputChange = (e) => {
@@ -32,25 +33,40 @@ export default function Contact() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
 
     playClickSound();
-    
-    // Simulate API request delay
-    setTimeout(() => {
-      setIsSubmitted(true);
-      playSuccessSound();
-      
-      // Explosion confetti trigger
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ["#c19c5c", "#ffffff", "#121214"]
+    setIsSending(true);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
-    }, 400);
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        playSuccessSound();
+        
+        // Explosion confetti trigger
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ["#c19c5c", "#ffffff", "#121214"]
+        });
+      } else {
+        alert("Something went wrong while sending your message. Please try again later.");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to send message. Please check your internet connection.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // Update clock coordinates (Rewa, India Time - IST)
@@ -244,13 +260,14 @@ export default function Contact() {
                     />
                   </div>
 
-                  <button
+                  <button 
                     type="submit"
+                    disabled={isSending}
                     onMouseEnter={playHoverSound}
-                    className="w-full py-4 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-[#c19c5c] dark:hover:bg-[#c19c5c] hover:text-white text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    className="w-full py-4 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-[#c19c5c] dark:hover:bg-[#c19c5c] hover:text-white text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {t('contact.submit')}
-                    <Send className="w-3.5 h-3.5" />
+                    {isSending ? "SENDING..." : t('contact.submit')} 
+                    {!isSending && <Send className="w-3.5 h-3.5" />}
                   </button>
                 </form>
               )}

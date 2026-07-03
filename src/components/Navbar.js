@@ -6,6 +6,7 @@ import { useAudio } from "@/context/AudioContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Volume2, VolumeX, ArrowUpRight, Sun, Moon, Globe, Menu, X } from "lucide-react";
+import { TbCircleLetterS } from "react-icons/tb";
 
 export default function Navbar() {
   const { isMuted, isAudioActive, toggleMute, playHoverSound, playClickSound } = useAudio();
@@ -79,21 +80,7 @@ export default function Navbar() {
         >
           {/* Logo Icon (Always Fixed Left) */}
           <div className="absolute left-0 w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-black dark:text-white group-hover:text-[#c19c5c] dark:group-hover:text-[#c19c5c] transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {/* Sunburst Rays */}
-              <line x1="12" y1="1.5" x2="12" y2="5.5" />
-              <line x1="12" y1="18.5" x2="12" y2="22.5" />
-              <line x1="4.5" y1="4.5" x2="7.3" y2="7.3" />
-              <line x1="16.7" y1="16.7" x2="19.5" y2="19.5" />
-              <line x1="1.5" y1="12" x2="5.5" y2="12" />
-              <line x1="18.5" y1="12" x2="22.5" y2="12" />
-              <line x1="4.5" y1="19.5" x2="7.3" y2="16.7" />
-              <line x1="16.7" y1="7.3" x2="19.5" y2="4.5" />
-              {/* Center 'S' */}
-              <text x="12" y="16.5" fontSize="14" fontWeight="900" textAnchor="middle" fill="currentColor" stroke="none" fontFamily="system-ui, -apple-system, Arial, sans-serif">
-                S
-              </text>
-            </svg>
+            <TbCircleLetterS className="w-5 h-5 text-black dark:text-white group-hover:text-[#c19c5c] dark:group-hover:text-[#c19c5c] transition-colors duration-300" />
           </div>
 
           {/* Expanded Name Text */}
@@ -271,17 +258,72 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Mobile Menu Toggle Button (visible on mobile only) */}
-        <button
-          onClick={() => {
-            playClickSound();
-            setMobileMenuOpen(!mobileMenuOpen);
-          }}
-          className="relative z-50 md:hidden h-11 w-11 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 pointer-events-auto text-black dark:text-white hover:border-[#c19c5c]/40"
-          aria-label="Toggle mobile menu"
-        >
-          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </button>
+        {/* Mobile Settings Controls (visible on mobile only) */}
+        <div className="flex md:hidden items-center gap-2 pointer-events-auto">
+          {/* Settings Capsule */}
+          <nav className="rounded-full border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-xl backdrop-saturate-150 p-1 flex items-center gap-1 shadow-lg shadow-black/5">
+            <button
+              onClick={() => {
+                playClickSound();
+                toggleMute();
+              }}
+              className="p-1.5 rounded-full text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white transition-all duration-300"
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#c19c5c]" />}
+            </button>
+            <button
+              onClick={() => {
+                playClickSound();
+                toggleTheme();
+              }}
+              className="p-1.5 rounded-full text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white transition-all duration-300"
+            >
+              {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-[#c19c5c]" /> : <Moon className="w-3.5 h-3.5 text-black/60" />}
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setLangMenuOpen(!langMenuOpen);
+                }}
+                className="p-1.5 rounded-full text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white transition-all duration-300 flex items-center gap-1"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="text-[9px] font-mono font-bold uppercase">{language}</span>
+              </button>
+              {/* Dropdown for Mobile Nav */}
+              {langMenuOpen && (
+                <div className="absolute top-full mt-2 right-0 flex flex-col bg-white dark:bg-[#121214] border border-black/10 dark:border-white/10 rounded-lg p-1 shadow-xl z-50 min-w-[90px]">
+                  {[{ code: 'en', label: 'English' }, { code: 'hi', label: 'हिन्दी' }, { code: 'ja', label: '日本語' }].map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        playClickSound();
+                        changeLanguage(l.code);
+                        setLangMenuOpen(false);
+                      }}
+                      className={`text-left px-3 py-2 rounded-md text-[10px] font-mono transition-colors duration-200 ${language === l.code ? 'bg-[#c19c5c]/10 text-[#c19c5c] font-bold' : 'text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    >
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            onClick={() => {
+              playClickSound();
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
+            className="relative z-50 h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 text-black dark:text-white hover:border-[#c19c5c]/40"
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+        </div>
 
         {/* Right Side: Start Project CTA (hidden on mobile) */}
         <a
