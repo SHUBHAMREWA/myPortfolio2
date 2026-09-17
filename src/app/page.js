@@ -57,6 +57,22 @@ export default function Home() {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [projects, setProjects] = useState(projectsData);
+
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setProjects(data.data);
+        }
+      } catch (err) {
+        // Fallback to static
+      }
+    }
+    loadProjects();
+  }, []);
 
 
   const { theme } = useTheme();
@@ -362,53 +378,65 @@ export default function Home() {
 
         {/* Project grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {projectsData.slice(0, 3).map((proj, index) => (
-            <div 
-              key={proj.id}
-              data-cursor="view"
-              onMouseEnter={playHoverSound}
-              onClick={() => { playClickSound(); router.push(`/work/${proj.id}`); }}
-              className="project-card group relative flex flex-col cursor-pointer"
-            >
-              {/* Image Container */}
-              <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-[1rem] bg-neutral-100 dark:bg-neutral-900 border border-black/5 dark:border-white/5">
-                <img 
-                  src={proj.images[0]} 
-                  alt={t(proj.titleKey)}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-[0.95] group-hover:-translate-x-[10%]"
-                />
-                {/* Hover Details Overlay */}
-                <div className="absolute inset-y-0 right-0 w-3/5 sm:w-1/2 bg-white/95 dark:bg-black/90 backdrop-blur-md border-l border-black/10 dark:border-white/10 translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col justify-center p-6">
-                  <h4 className="text-black dark:text-white font-bold text-sm tracking-widest uppercase mb-3 line-clamp-2 leading-snug">
-                    {t(proj.titleKey)}
-                  </h4>
-                  <p className="text-black/70 dark:text-white/70 text-[10px] sm:text-xs leading-relaxed line-clamp-4 mb-6 font-medium">
-                    {t(proj.descKey)}
-                  </p>
-                  <div className="mt-auto">
-                    <span className="inline-flex items-center gap-2 text-[#c19c5c] text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase">
-                      Click to view <ArrowUpRight className="w-3 h-3" />
-                    </span>
+          {projects.slice(0, 3).map((proj) => {
+            const displayTitle = (proj.titleKey && t(proj.titleKey) !== proj.titleKey) 
+              ? t(proj.titleKey) 
+              : (proj.title || proj.titleKey);
+            const displayCategory = (proj.categoryKey && t(proj.categoryKey) !== proj.categoryKey) 
+              ? t(proj.categoryKey) 
+              : (proj.category || proj.categoryKey);
+            const displayDesc = (proj.descKey && t(proj.descKey) !== proj.descKey) 
+              ? t(proj.descKey) 
+              : (proj.desc || proj.descKey);
+
+            return (
+              <div 
+                key={proj.id}
+                data-cursor="view"
+                onMouseEnter={playHoverSound}
+                onClick={() => { playClickSound(); router.push(`/work/${proj.id}`); }}
+                className="project-card group relative flex flex-col cursor-pointer"
+              >
+                {/* Image Container */}
+                <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-[1rem] bg-neutral-100 dark:bg-neutral-900 border border-black/5 dark:border-white/5">
+                  <img 
+                    src={proj.images[0]} 
+                    alt={displayTitle}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-[0.95] group-hover:-translate-x-[10%]"
+                  />
+                  {/* Hover Details Overlay */}
+                  <div className="absolute inset-y-0 right-0 w-3/5 sm:w-1/2 bg-white/95 dark:bg-black/90 backdrop-blur-md border-l border-black/10 dark:border-white/10 translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col justify-center p-6">
+                    <h4 className="text-black dark:text-white font-bold text-sm tracking-widest uppercase mb-3 line-clamp-2 leading-snug">
+                      {displayTitle}
+                    </h4>
+                    <p className="text-black/70 dark:text-white/70 text-[10px] sm:text-xs leading-relaxed line-clamp-4 mb-6 font-medium">
+                      {displayDesc}
+                    </p>
+                    <div className="mt-auto">
+                      <span className="inline-flex items-center gap-2 text-[#c19c5c] text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase">
+                        Click to view <ArrowUpRight className="w-3 h-3" />
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Info text */}
-              <div className="mt-5 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold tracking-[0.1em] text-black dark:text-white uppercase">
-                    {t(proj.titleKey)}
-                  </h3>
-                  <span className="text-[10px] font-bold tracking-[0.15em] text-black/50 dark:text-white/50 uppercase">
-                    {t(proj.categoryKey).split(" ")[0]} {/* Showing only first word for clean layout */}
-                  </span>
+                {/* Info text */}
+                <div className="mt-5 flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold tracking-[0.1em] text-black dark:text-white uppercase">
+                      {displayTitle}
+                    </h3>
+                    <span className="text-[10px] font-bold tracking-[0.15em] text-black/50 dark:text-white/50 uppercase">
+                      {displayCategory.split(" ")[0]}
+                    </span>
+                  </div>
+                  <p className="text-black/60 dark:text-white/60 font-medium text-xs mt-3 leading-relaxed truncate pr-4">
+                    {displayDesc}
+                  </p>
                 </div>
-                <p className="text-black/60 dark:text-white/60 font-medium text-xs mt-3 leading-relaxed truncate pr-4">
-                  {t(proj.descKey)}
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
       </section>

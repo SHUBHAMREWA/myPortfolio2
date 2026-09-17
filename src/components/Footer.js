@@ -50,6 +50,13 @@ export default function Footer() {
               REWA, INDIA
             </span>
           </div>
+          <a
+            href="/login"
+            onClick={(e) => handleLinkClick(e, "/login")}
+            className="text-[9px] font-mono text-black/30 dark:text-white/30 hover:text-[#c19c5c] transition-colors uppercase tracking-widest mt-1"
+          >
+            • Admin Portal
+          </a>
         </div>
 
         {/* Quick Links */}
