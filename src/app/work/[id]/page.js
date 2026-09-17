@@ -2,29 +2,71 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { projectsData } from "@/data/projectsData";
+import { projectsData as staticProjects } from "@/data/projectsData";
 import { useLanguage } from "@/context/LanguageContext";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Code } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 
 export default function ProjectDetails() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
   const { t } = useLanguage();
   const { playClickSound, playHoverSound } = useAudio();
   
   const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const found = projectsData.find(p => p.id === id);
-    if (found) {
-      setProject(found);
-    } else {
-      router.push("/work");
+    if (!id) return;
+
+    async function fetchProject() {
+      try {
+        const res = await fetch(`/api/projects/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data) {
+            setProject(data.data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch project from database, checking static fallback...");
+      }
+
+      // Check fallback static projects
+      const found = staticProjects.find((p) => p.id === id);
+      if (found) {
+        setProject(found);
+      } else {
+        router.push("/work");
+      }
+      setLoading(false);
     }
+
+    fetchProject();
   }, [id, router]);
 
-  if (!project) return <div className="min-h-screen bg-white dark:bg-[#0a0a0a]" />;
+  if (loading || !project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#c19c5c] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const displayTitle = (project.titleKey && t(project.titleKey) !== project.titleKey) 
+    ? t(project.titleKey) 
+    : (project.title || project.titleKey);
+
+  const displayCategory = (project.categoryKey && t(project.categoryKey) !== project.categoryKey) 
+    ? t(project.categoryKey) 
+    : (project.category || project.categoryKey);
+
+  const displayOverview = (project.overviewKey && t(project.overviewKey) !== project.overviewKey) 
+    ? t(project.overviewKey) 
+    : (project.overview || project.overviewKey);
 
   return (
     <div className="w-full relative z-10 pt-32 pb-16 px-6 max-w-7xl mx-auto min-h-screen">
@@ -43,10 +85,10 @@ export default function ProjectDetails() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div className="flex flex-col">
           <span className="text-[10px] font-mono tracking-[0.3em] text-[#c19c5c] uppercase mb-4">
-            [ {project.year} // {t(project.categoryKey)} ]
+            [ {project.year || "2026"} // {displayCategory} ]
           </span>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-black dark:text-white uppercase leading-none">
-            {t(project.titleKey)}
+            {displayTitle}
           </h1>
         </div>
 
@@ -65,10 +107,10 @@ export default function ProjectDetails() {
       </div>
 
       {/* Hero Image */}
-      <div className="w-full aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden mb-16 border border-black/5 dark:border-white/5">
+      <div className="w-full aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden mb-16 border border-black/5 dark:border-white/5 bg-neutral-900">
         <img 
           src={project.images[0]} 
-          alt={t(project.titleKey)}
+          alt={displayTitle}
           className="w-full h-full object-cover"
         />
       </div>
@@ -83,7 +125,7 @@ export default function ProjectDetails() {
               <Code className="w-4 h-4" /> TECH STACK
             </h3>
             <div className="flex flex-wrap gap-2">
-              {project.stack.map((tech, idx) => (
+              {(project.stack || []).map((tech, idx) => (
                 <span 
                   key={idx}
                   className="px-4 py-2 rounded-full border border-black/10 dark:border-white/10 text-xs font-medium text-black/70 dark:text-white/70 bg-neutral-50 dark:bg-neutral-900/50"
@@ -100,14 +142,14 @@ export default function ProjectDetails() {
           <h3 className="text-xs font-bold tracking-[0.2em] text-black/40 dark:text-white/40 uppercase mb-6">
             PROJECT OVERVIEW
           </h3>
-          <p className="text-lg md:text-xl font-light leading-relaxed text-black/80 dark:text-white/80">
-            {t(project.overviewKey)}
+          <p className="text-lg md:text-xl font-light leading-relaxed text-black/80 dark:text-white/80 whitespace-pre-line">
+            {displayOverview}
           </p>
         </div>
       </div>
 
       {/* Additional Images Gallery */}
-      {project.images.length > 1 && (
+      {project.images && project.images.length > 1 && (
         <div className="w-full flex flex-col gap-8 md:gap-16">
           {project.images.slice(1).map((imgUrl, idx) => (
             <div 
@@ -116,7 +158,7 @@ export default function ProjectDetails() {
             >
               <img 
                 src={imgUrl} 
-                alt={`${t(project.titleKey)} gallery image ${idx + 1}`}
+                alt={`${displayTitle} gallery image ${idx + 1}`}
                 className="w-full h-auto object-cover"
                 loading="lazy"
               />

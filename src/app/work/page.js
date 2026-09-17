@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAudio } from "@/context/AudioContext";
-import { projectsData } from "@/data/projectsData";
+import { projectsData as staticProjects } from "@/data/projectsData";
 import gsap from "gsap";
 
 function HoverProjectRow({ proj }) {
@@ -17,6 +17,14 @@ function HoverProjectRow({ proj }) {
   const floatingWrapperRef = useRef(null);
   const floatingInnerRef = useRef(null);
   const intervalRef = useRef(null);
+
+  const displayTitle = (proj.titleKey && t(proj.titleKey) !== proj.titleKey) 
+    ? t(proj.titleKey) 
+    : (proj.title || proj.titleKey);
+
+  const displayDesc = (proj.descKey && t(proj.descKey) !== proj.descKey) 
+    ? t(proj.descKey) 
+    : (proj.desc || proj.descKey);
 
   const handleMouseMove = (e) => {
     if (!containerRef.current || !floatingWrapperRef.current) return;
@@ -108,7 +116,7 @@ function HoverProjectRow({ proj }) {
         {/* Main Background Image */}
         <img
           src={proj.images[0]}
-          alt={t(proj.titleKey)}
+          alt={displayTitle}
           className="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-[1.03] opacity-90 group-hover:opacity-70"
         />
         
@@ -148,10 +156,10 @@ function HoverProjectRow({ proj }) {
 
           <div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold uppercase leading-[1.1] mb-4 text-black dark:text-white transition-colors group-hover:text-[#c19c5c]">
-              {t(proj.titleKey)}
+              {displayTitle}
             </h2>
             <p className="text-xs sm:text-sm font-medium text-black/60 dark:text-white/60 leading-relaxed max-w-md">
-              {t(proj.descKey)}
+              {displayDesc}
             </p>
           </div>
 
@@ -161,7 +169,7 @@ function HoverProjectRow({ proj }) {
               Tech Stack
             </span>
             <div className="flex flex-wrap gap-2">
-              {proj.stack.map(tech => (
+              {(proj.stack || []).map(tech => (
                 <span 
                   key={tech} 
                   className="text-[10px] sm:text-xs font-mono font-bold tracking-wide text-black/70 dark:text-white/70 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-3 py-1.5 rounded-full"
@@ -180,6 +188,25 @@ function HoverProjectRow({ proj }) {
 
 export default function WorkIndexPage() {
   const { t } = useLanguage();
+  const [projects, setProjects] = useState(staticProjects);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setProjects(data.data);
+        }
+      } catch (err) {
+        console.warn("Using fallback static project list:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProjects();
+  }, []);
 
   return (
     <div className="w-full relative z-10 pt-32 pb-16 px-4 md:px-6 max-w-[1400px] mx-auto min-h-screen">
@@ -196,7 +223,7 @@ export default function WorkIndexPage() {
       </div>
 
       <div className="flex flex-col gap-12 md:gap-16 w-full">
-        {projectsData.map((proj) => (
+        {projects.map((proj) => (
           <HoverProjectRow key={proj.id} proj={proj} />
         ))}
       </div>
