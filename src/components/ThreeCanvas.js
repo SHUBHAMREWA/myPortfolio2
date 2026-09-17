@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ─── Atmosphere glow shaders ─────────────────────────────────── */
+/* --- Atmosphere glow shaders ----------------------------------- */
 const atmVert = `
   varying vec3 vNormal;
   void main() {
@@ -51,7 +51,7 @@ export default function ThreeCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    /* ── Renderer ─────────────────────────────────────────────── */
+    /* -- Renderer ----------------------------------------------- */
     const renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,          // transparent background
@@ -64,12 +64,12 @@ export default function ThreeCanvas() {
     renderer.setSize(startW, startH, false);
     renderer.setClearColor(0x000000, 0);  // fully transparent
 
-    /* ── Scene / Camera ───────────────────────────────────────── */
+    /* -- Scene / Camera ----------------------------------------- */
     const scene  = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, startW / startH, 0.1, 100);
     camera.position.set(0, 0, 4.8);
 
-    /* ── Lighting ─────────────────────────────────────────────── */
+    /* -- Lighting ----------------------------------------------- */
     const ambient = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambient);
 
@@ -81,7 +81,7 @@ export default function ThreeCanvas() {
     backLight.position.set(-5, -2, -4);
     scene.add(backLight);
 
-    /* ── Textures ─────────────────────────────────────────────── */
+    /* -- Textures ----------------------------------------------- */
     const loader  = new THREE.TextureLoader();
     loader.crossOrigin = "anonymous";
 
@@ -89,7 +89,7 @@ export default function ThreeCanvas() {
     const nightMap  = loader.load("https://unpkg.com/three-globe/example/img/earth-night.jpg");
     const bumpMap   = loader.load("https://unpkg.com/three-globe/example/img/earth-topology.png");
 
-    /* ── Earth pivot group (handles drag / scroll offset) ─────── */
+    /* -- Earth pivot group (handles drag / scroll offset) ------- */
     const pivot = new THREE.Group();
     pivot.rotation.y = 0;       // no initial pivot Y rotation
     pivot.rotation.x = 0.35;   // slight upward tilt for latitude
@@ -108,7 +108,7 @@ export default function ThreeCanvas() {
     }
     scene.add(pivot);
 
-    /* ── Earth sphere ─────────────────────────────────────────── */
+    /* -- Earth sphere ------------------------------------------- */
     const earthGeo = new THREE.SphereGeometry(1, 64, 64);
     const earthMat = new THREE.MeshStandardMaterial({
       map:         dayMap,
@@ -128,7 +128,7 @@ export default function ThreeCanvas() {
 
     /* Clouds removed per user request */
 
-    /* ── Atmosphere glow ──────────────────────────────────────── */
+    /* -- Atmosphere glow ---------------------------------------- */
     const atmGeo = new THREE.SphereGeometry(1.08, 64, 64);
     const atmMat = new THREE.ShaderMaterial({
       vertexShader:   atmVert,
@@ -144,7 +144,7 @@ export default function ThreeCanvas() {
     const atmosphere = new THREE.Mesh(atmGeo, atmMat);
     pivot.add(atmosphere);
 
-    /* ── India location pin ───────────────────────────────────── */
+    /* -- India location pin ------------------------------------- */
     const lat = 22.5937, lon = 78.9629, r = 1.025;
     // THREE.js SphereGeometry vertex formula:
     //   x = -cos(phiAzimuthal) * sin(thetaPolar)
@@ -160,7 +160,7 @@ export default function ThreeCanvas() {
     // Outward normal direction (from earth center toward surface point)
     const normal = new THREE.Vector3(px, py, pz).normalize();
 
-    // ── Pin group — all children rotate with the earth ─────────
+    // -- Pin group - all children rotate with the earth ---------
     const pinGroup = new THREE.Group();
     earth.add(pinGroup);
 
@@ -191,7 +191,7 @@ export default function ThreeCanvas() {
     );
     pinGroup.add(spikeMesh);
 
-    // 3. Pulsing ring — oriented perpendicular to the outward normal
+    // 3. Pulsing ring - oriented perpendicular to the outward normal
     const ringGeo = new THREE.RingGeometry(0.025, 0.07, 32);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xc19c5c,
@@ -207,7 +207,7 @@ export default function ThreeCanvas() {
     pinGroup.add(ring);
 
 
-    /* ── Intro spin-down animation ────────────────────────────── */
+    /* -- Intro spin-down animation ------------------------------ */
     // spinSpeed starts fast and decelerates to a gentle idle
     const spin = { speed: 0.035 };
     gsap.to(spin, {
@@ -217,7 +217,7 @@ export default function ThreeCanvas() {
       delay: 0.3,
     });
 
-    /* ── Drag-to-rotate — only active at home (scrollY < 60) ──── */
+    /* -- Drag-to-rotate - only active at home (scrollY < 60) ---- */
     let isDragging = false;
     let prevX = 0, prevY = 0;
     const velocity = { x: 0, y: 0 };
@@ -259,7 +259,7 @@ export default function ThreeCanvas() {
       canvas.style.cursor = dragAllowed() ? "grab" : "default";
     };
 
-    // All events on window — bypasses z-index stacking of main content
+    // All events on window - bypasses z-index stacking of main content
     window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup",   onPointerUp);
@@ -268,7 +268,7 @@ export default function ThreeCanvas() {
     window.addEventListener("touchend",    onPointerUp);
     window.addEventListener("scroll",      onScroll, { passive: true });
 
-    /* ── GSAP scroll-driven repositioning ─────────────────────── */
+    /* -- GSAP scroll-driven repositioning ----------------------- */
     const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: "body", start: "top top", end: "bottom bottom", scrub: 1.4,
@@ -301,7 +301,7 @@ export default function ThreeCanvas() {
         .to(pivot.scale,    { x: 0.48, y: 0.48, z: 0.48, duration: 1 }, "<");
     }
 
-    /* ── Resize handler ───────────────────────────────────────── */
+    /* -- Resize handler ----------------------------------------- */
     const onResize = () => {
       const w = canvas.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
       const h = canvas.clientHeight || (typeof window !== "undefined" ? window.innerHeight : 600);
@@ -312,7 +312,7 @@ export default function ThreeCanvas() {
     window.addEventListener("resize", onResize);
     onResize(); // Call once initially to guarantee correct size on mount
 
-    /* ── Animation loop ───────────────────────────────────────── */
+    /* -- Animation loop ----------------------------------------- */
     let rafId;
     let ringPulse = 0;
     const clock = new THREE.Clock();
@@ -336,7 +336,7 @@ export default function ThreeCanvas() {
       // Auto spin on the EARTH mesh (keeps drag-via-pivot separate)
       if (!isDragging) {
         earth.rotation.y += spin.speed;
-        // Inertia — apply remaining velocity and decay
+        // Inertia - apply remaining velocity and decay
         if (Math.abs(velocity.x) > 0.0001 || Math.abs(velocity.y) > 0.0001) {
           pivot.rotation.y += velocity.x;
           pivot.rotation.x += velocity.y;
@@ -355,7 +355,7 @@ export default function ThreeCanvas() {
     };
     animate();
 
-    /* ── Cleanup ──────────────────────────────────────────────── */
+    /* -- Cleanup ------------------------------------------------ */
     return () => {
       cancelAnimationFrame(rafId);
       renderer.dispose();
@@ -389,7 +389,7 @@ export default function ThreeCanvas() {
         pointerEvents: "none",
       }}
     >
-      {/* Canvas — transparent, pointer-events none (drag handled at window level) */}
+      {/* Canvas - transparent, pointer-events none (drag handled at window level) */}
       <canvas
         ref={canvasRef}
         style={{

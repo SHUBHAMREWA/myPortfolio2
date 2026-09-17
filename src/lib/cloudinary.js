@@ -10,15 +10,16 @@ cloudinary.config({
 /**
  * Upload a file buffer to Cloudinary using upload_stream
  * @param {Buffer} buffer - File buffer
- * @param {string} folder - Target Cloudinary folder
+ * @param {string} folder - Target Cloudinary folder (default: 'portfoliophoto')
  * @returns {Promise<Object>}
  */
-export async function uploadToCloudinary(buffer, folder = 'portfolio/projects') {
+export async function uploadToCloudinary(buffer, folder = 'portfoliophoto') {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: 'auto',
+        resource_type: 'image',
+        format: 'webp',
       },
       (error, result) => {
         if (error) {

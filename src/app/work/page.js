@@ -150,7 +150,7 @@ function HoverProjectRow({ proj }) {
           
           <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-4">
             <span className="text-[10px] sm:text-xs font-mono tracking-widest uppercase text-black/50 dark:text-white/50">
-              ss — [ {proj.year} ]
+              ss - [ {proj.year} ]
             </span>
           </div>
 

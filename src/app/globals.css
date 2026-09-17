@@ -78,6 +78,13 @@ html.lenis, html.lenis body {
   color: #ffffff;
 }
 
+/* Hide navbar completely when admin project modal is open */
+body.admin-modal-open header {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 
 
 
