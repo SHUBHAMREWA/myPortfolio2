@@ -1,9 +1,9 @@
 import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dkc2fkpkp',
+  api_key: process.env.CLOUDINARY_API_KEY || '738449759794842',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'L1ZCosHVz3dLyRPHIsRAnph0A0w',
   secure: true,
 });
 
@@ -20,9 +20,13 @@ export async function uploadToCloudinary(buffer, folder = 'portfoliophoto') {
         folder,
         resource_type: 'image',
         format: 'webp',
+        transformation: [
+          { quality: 'auto:good', fetch_format: 'webp' }
+        ],
       },
       (error, result) => {
         if (error) {
+          console.error('Cloudinary upload_stream error:', error);
           return reject(error);
         }
         resolve(result);

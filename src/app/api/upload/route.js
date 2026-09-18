@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/auth';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import sharp from 'sharp';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
@@ -34,13 +36,22 @@ export async function POST(request) {
       const arrayBuffer = await file.arrayBuffer();
       const rawBuffer = Buffer.from(arrayBuffer);
 
-      // 1. Compress & convert to WebP format using sharp (high compression, optimal web delivery)
-      const compressedWebpBuffer = await sharp(rawBuffer)
-        .webp({ quality: 80, effort: 4 })
-        .toBuffer();
+      // Attempt server-side compression via sharp if supported on host runtime
+      let uploadBuffer = rawBuffer;
+      try {
+        const sharpModule = await import('sharp');
+        const sharp = sharpModule.default || sharpModule;
+        uploadBuffer = await sharp(rawBuffer)
+          .webp({ quality: 80, effort: 4 })
+          .toBuffer();
+      } catch (sharpError) {
+        // If native sharp binary is missing in host environment (e.g. AWS Lambda / Vercel),
+        // Cloudinary handles WebP format conversion and auto-compression natively.
+        console.warn('Sharp compression unavailable on runtime, delegating to Cloudinary:', sharpError?.message);
+      }
 
-      // 2. Upload compressed WebP to Cloudinary in the "portfoliophoto" folder
-      const result = await uploadToCloudinary(compressedWebpBuffer, 'portfoliophoto');
+      // Upload to Cloudinary in the "portfoliophoto" folder
+      const result = await uploadToCloudinary(uploadBuffer, 'portfoliophoto');
       uploadResults.push({
         url: result.secure_url,
         publicId: result.public_id,
@@ -60,11 +71,10 @@ export async function POST(request) {
       success: true,
       message: `${uploadResults.length} file(s) converted to WebP and uploaded to portfoliophoto successfully!`,
       files: uploadResults,
-      // For single file convenience
       url: uploadResults[0].url,
     });
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
+    console.error('Cloudinary upload route error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to upload image to Cloudinary' },
       { status: 500 }
