@@ -58,7 +58,7 @@ export async function POST(request) {
         stack: p.stack,
         images: p.images,
         featured: true,
-        order: i,
+        order: i + 1,
       });
 
       seededProjects.push(doc);

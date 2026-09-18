@@ -79,7 +79,13 @@ export async function PUT(request, { params }) {
       existing.images = body.images;
     }
     if (body.featured !== undefined) existing.featured = Boolean(body.featured);
-    if (body.order !== undefined) existing.order = Number(body.order);
+    if (body.order !== undefined) {
+      const newOrder = Math.max(1, Number(body.order) || 1);
+      if (newOrder === 1 && existing.order !== 1) {
+        await Project.updateMany({ id: { $ne: existing.id }, order: { $gte: 1 } }, { $inc: { order: 1 } });
+      }
+      existing.order = newOrder;
+    }
     existing.stack = parsedStack;
 
     await existing.save();

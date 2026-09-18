@@ -32,6 +32,12 @@ import {
   Link2,
   SlidersHorizontal,
   Info,
+  GripVertical,
+  LayoutGrid,
+  Kanban,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpToLine,
 } from "lucide-react";
 import { TbCircleLetterS } from "react-icons/tb";
 
@@ -79,6 +85,13 @@ export default function AdminDashboard() {
 
   const [manualImageUrl, setManualImageUrl] = useState("");
   const fileInputRef = useRef(null);
+
+  // Kanban view and Drag-and-drop reorder state
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "kanban"
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [orderSaveMessage, setOrderSaveMessage] = useState("");
 
   // Close modal on Escape key
   useEffect(() => {
@@ -275,7 +288,7 @@ export default function AdminDashboard() {
       stack: "",
       images: [],
       featured: true,
-      order: projects.length,
+      order: projects.length + 1,
     });
     setModalOpen(true);
   };
@@ -296,9 +309,107 @@ export default function AdminDashboard() {
       stack: Array.isArray(proj.stack) ? proj.stack.join(", ") : (proj.stack || ""),
       images: proj.images || [],
       featured: proj.featured !== undefined ? proj.featured : true,
-      order: proj.order || 0,
+      order: proj.order || 1,
     });
     setModalOpen(true);
+  };
+
+  // Reorder & Drag-and-Drop Handlers
+  const saveNewProjectOrder = async (reorderedProjects) => {
+    setIsSavingOrder(true);
+    setActionError("");
+    try {
+      const orderedIds = reorderedProjects.map((p) => p.id);
+      const res = await fetch("/api/projects/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update project order");
+
+      playSuccessSound();
+      const topProject = reorderedProjects[0];
+      setOrderSaveMessage(`"${topProject.title}" is now #1 at the top of your showcase`);
+      setTimeout(() => setOrderSaveMessage(""), 5000);
+
+      if (data.data) {
+        setProjects(data.data);
+      }
+    } catch (err) {
+      setActionError(err.message);
+      fetchProjects();
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverItemIndex !== index) {
+      setDragOverItemIndex(index);
+    }
+  };
+
+  const handleDrop = async (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === targetIndex) {
+      setDraggedItemIndex(null);
+      setDragOverItemIndex(null);
+      return;
+    }
+
+    const updated = [...projects];
+    const [movedItem] = updated.splice(draggedItemIndex, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    const reindexed = updated.map((p, i) => ({ ...p, order: i + 1 }));
+    setProjects(reindexed);
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+
+    await saveNewProjectOrder(reindexed);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  const handleMoveProject = async (currentIndex, direction) => {
+    const newIndex = currentIndex + direction;
+    if (newIndex < 0 || newIndex >= projects.length) return;
+
+    playClickSound();
+    const updated = [...projects];
+    const [item] = updated.splice(currentIndex, 1);
+    updated.splice(newIndex, 0, item);
+
+    const reindexed = updated.map((p, i) => ({ ...p, order: i + 1 }));
+    setProjects(reindexed);
+
+    await saveNewProjectOrder(reindexed);
+  };
+
+  const handleMoveToTop = async (currentIndex) => {
+    if (currentIndex === 0) return;
+    playClickSound();
+    const updated = [...projects];
+    const [item] = updated.splice(currentIndex, 1);
+    updated.unshift(item);
+
+    const reindexed = updated.map((p, i) => ({ ...p, order: i + 1 }));
+    setProjects(reindexed);
+
+    await saveNewProjectOrder(reindexed);
   };
 
   // Submit Project Form (Create or Update)
@@ -484,17 +595,85 @@ export default function AdminDashboard() {
 
       {/* Projects List Section */}
       <div className="bg-white/70 dark:bg-[#111113]/70 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5 dark:border-white/5">
-          <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
-            <FolderGit2 className="w-5 h-5 text-[#c19c5c]" /> Projects Collection
-          </h2>
-          <button
-            onClick={fetchProjects}
-            className="text-xs font-mono text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white flex items-center gap-1.5 transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadingProjects ? 'animate-spin' : ''}`} /> Refresh
-          </button>
+        
+        {/* Section Header with View Switcher */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-black/5 dark:border-white/5">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+                <FolderGit2 className="w-5 h-5 text-[#c19c5c]" /> Projects Collection
+              </h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#c19c5c]/10 text-[#c19c5c] font-bold border border-[#c19c5c]/20">
+                1-Based Indexing
+              </span>
+            </div>
+            <p className="text-xs text-black/50 dark:text-white/50">
+              Drag and drop works or use quick-rank buttons. Project with <span className="text-[#c19c5c] font-bold font-mono">Index #1</span> is displayed first at the very top of your live portfolio.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Saving indicator */}
+            {isSavingOrder && (
+              <div className="flex items-center gap-2 text-xs font-mono text-[#c19c5c] animate-pulse mr-1">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Saving order...</span>
+              </div>
+            )}
+
+            {/* View Mode Toggle: Grid Cards vs. Kanban Board */}
+            <div className="flex items-center p-1 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => { setViewMode("grid"); playClickSound(); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "grid" 
+                    ? "bg-white dark:bg-[#1f1f23] text-[#c19c5c] shadow-sm" 
+                    : "text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white"
+                }`}
+                title="Grid view"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grid</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setViewMode("kanban"); playClickSound(); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "kanban" 
+                    ? "bg-white dark:bg-[#1f1f23] text-[#c19c5c] shadow-sm" 
+                    : "text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white"
+                }`}
+                title="Kanban Drag-and-Drop Reorder Board"
+              >
+                <Kanban className="w-3.5 h-3.5" />
+                <span>Kanban Board</span>
+              </button>
+            </div>
+
+            <button
+              onClick={fetchProjects}
+              className="text-xs font-mono text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white flex items-center gap-1.5 transition-colors p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 border border-black/5 dark:border-white/5"
+              title="Refresh works from database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingProjects ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
+
+        {/* Order Saved Toast Banner */}
+        {orderSaveMessage && (
+          <div className="mb-6 p-3.5 rounded-2xl bg-[#c19c5c]/10 border border-[#c19c5c]/30 text-[#c19c5c] text-xs font-mono flex items-center justify-between animate-fade-in shadow-sm">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-[#c19c5c]" />
+              <span className="font-semibold">{orderSaveMessage}</span>
+            </div>
+            <button onClick={() => setOrderSaveMessage("")} className="hover:opacity-70 cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {loadingProjects ? (
           <div className="py-20 flex flex-col items-center justify-center">
@@ -525,108 +704,597 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-        ) : (
+        ) : viewMode === "grid" ? (
+          
+          /* ── GRID VIEW (WITH DRAG-AND-DROP REORDERING) ── */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((proj) => (
-              <div
-                key={proj.id}
-                className="group relative bg-white dark:bg-[#161619] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:border-[#c19c5c]/50 transition-all duration-300"
-              >
-                {/* Thumbnail */}
-                <div className="relative aspect-video w-full overflow-hidden bg-neutral-900">
-                  <img
-                    src={proj.images?.[0] || "/placeholder.png"}
-                    alt={proj.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-white text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/10">
-                    {proj.year || "2026"}
-                  </div>
-                  <div className="absolute top-3 right-3 bg-[#c19c5c] text-black text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    {proj.images?.length || 1} {proj.images?.length === 1 ? 'img' : 'imgs'}
-                  </div>
-                </div>
+            {projects.map((proj, idx) => {
+              const isFirst = idx === 0 || proj.order === 1;
+              const isDragging = draggedItemIndex === idx;
+              const isDragOver = dragOverItemIndex === idx;
 
-                {/* Body Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono tracking-widest text-[#c19c5c] uppercase block mb-1">
-                      {proj.category}
-                    </span>
-                    <h3 className="text-lg font-bold text-black dark:text-white uppercase leading-snug mb-2 line-clamp-1">
-                      {proj.title}
-                    </h3>
-                    <p className="text-xs text-black/60 dark:text-white/60 line-clamp-2 leading-relaxed mb-4">
-                      {proj.desc}
-                    </p>
+              return (
+                <div
+                  key={proj.id}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  className={`group relative bg-white dark:bg-[#161619] border rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm transition-all duration-300 ${
+                    isDragging 
+                      ? "opacity-30 scale-95 border-dashed border-[#c19c5c]" 
+                      : isDragOver
+                      ? "border-[#c19c5c] ring-2 ring-[#c19c5c] ring-offset-2 scale-[1.02] shadow-xl"
+                      : "border-black/10 dark:border-white/10 hover:border-[#c19c5c]/50"
+                  }`}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-neutral-900 cursor-grab active:cursor-grabbing">
+                    <img
+                      src={proj.images?.[0] || "/placeholder.png"}
+                      alt={proj.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
+                    />
 
-                    {/* Stack tags */}
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {(proj.stack || []).slice(0, 3).map((tag, i) => (
-                        <span
-                          key={i}
-                          className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-black/70 dark:text-white/70"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {(proj.stack || []).length > 3 && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 text-black/40 dark:text-white/40">
-                          +{proj.stack.length - 3}
-                        </span>
-                      )}
+                    {/* Top-Left: Index Badge & Year */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+                      <div className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-md ${
+                        isFirst 
+                          ? "bg-[#c19c5c] text-black font-extrabold shadow-[#c19c5c]/30" 
+                          : "bg-black/80 backdrop-blur-md text-white/90 border border-white/20"
+                      }`}>
+                        <span>#{idx + 1}</span>
+                        {isFirst && (
+                          <span className="text-[8px] bg-black text-[#c19c5c] px-1 py-0.5 rounded font-black tracking-tight">
+                            TOP
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-black/70 backdrop-blur-md text-white text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/10">
+                        {proj.year || "2026"}
+                      </div>
+                    </div>
+
+                    {/* Top-Right: Image Count */}
+                    <div className="absolute top-3 right-3 bg-[#c19c5c] text-black text-[9px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow">
+                      {proj.images?.length || 1} {proj.images?.length === 1 ? 'img' : 'imgs'}
                     </div>
                   </div>
 
-                  {/* Card Actions */}
-                  <div className="pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between">
-                    <a
-                      href={`/work/${proj.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-mono tracking-wider text-black/60 dark:text-white/60 hover:text-[#c19c5c] flex items-center gap-1 transition-colors"
+                  {/* Body Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-mono tracking-widest text-[#c19c5c] uppercase block">
+                          {proj.category}
+                        </span>
+                        <span className="text-[10px] font-mono text-black/40 dark:text-white/40">
+                          Index: #{idx + 1}
+                        </span>
+                      </div>
+
+                      <h3 className="text-lg font-bold text-black dark:text-white uppercase leading-snug mb-2 line-clamp-1">
+                        {proj.title}
+                      </h3>
+                      <p className="text-xs text-black/60 dark:text-white/60 line-clamp-2 leading-relaxed mb-4">
+                        {proj.desc}
+                      </p>
+
+                      {/* Stack tags */}
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {(proj.stack || []).slice(0, 3).map((tag, i) => (
+                          <span
+                            key={i}
+                            className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-black/70 dark:text-white/70"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {(proj.stack || []).length > 3 && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 text-black/40 dark:text-white/40">
+                            +{proj.stack.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Actions & Reorder Controls */}
+                    <div className="pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {/* Drag Handle */}
+                        <div 
+                          className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white cursor-grab active:cursor-grabbing transition-colors"
+                          title="Drag card to reorder position"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+
+                        {/* Quick Reorder Buttons */}
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMoveToTop(idx)}
+                            className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                            title="Promote to Top (#1)"
+                          >
+                            <ArrowUpToLine className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProject(idx, -1)}
+                            className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black/60 dark:text-white/60 transition-colors"
+                            title="Move earlier (Rank up)"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        {idx < projects.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProject(idx, 1)}
+                            className="p-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black/60 dark:text-white/60 transition-colors"
+                            title="Move later (Rank down)"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <a
+                          href={`/work/${proj.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-mono tracking-wider text-black/60 dark:text-white/60 hover:text-[#c19c5c] flex items-center gap-1 transition-colors ml-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Preview
+                        </a>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit(proj)}
+                          className="p-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
+                          title="Edit Project"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+
+                        {deleteConfirmId === proj.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDeleteProject(proj.id)}
+                              className="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold uppercase"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="p-1 text-black/50 dark:text-white/50"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirmId(proj.id)}
+                            className="p-2 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors"
+                            title="Delete Project"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          
+          /* ── KANBAN REORDER BOARD (DRAG-AND-DROP LANES) ── */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Lane 1: Top Priority Showcase (#1 - #3) */}
+            <div 
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={(e) => {
+                if (draggedItemIndex !== null && draggedItemIndex > 2) {
+                  handleDrop(e, 0); // Drop to slot #1
+                }
+              }}
+              className="flex flex-col bg-black/[0.02] dark:bg-white/[0.02] border border-[#c19c5c]/30 rounded-2xl p-4 sm:p-5"
+            >
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#c19c5c]/20">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#c19c5c] animate-pulse" />
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+                    Top Showcase (#1 - #3)
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#c19c5c] text-black font-extrabold">
+                  {projects.slice(0, 3).length} / 3
+                </span>
+              </div>
+              <p className="text-[11px] text-black/50 dark:text-white/50 mb-4">
+                These works appear first in your homepage hero showcase and portfolio top.
+              </p>
+
+              <div className="flex flex-col gap-3 min-h-[140px]">
+                {projects.slice(0, 3).map((proj, i) => {
+                  const globalIdx = i;
+                  const isFirst = globalIdx === 0;
+                  const isDragging = draggedItemIndex === globalIdx;
+                  const isDragOver = dragOverItemIndex === globalIdx;
+
+                  return (
+                    <div
+                      key={proj.id}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, globalIdx)}
+                      onDragOver={(e) => handleDragOver(e, globalIdx)}
+                      onDrop={(e) => handleDrop(e, globalIdx)}
+                      onDragEnd={handleDragEnd}
+                      className={`p-3 rounded-xl border bg-white dark:bg-[#161619] flex flex-col gap-2.5 shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+                        isDragging
+                          ? "opacity-30 scale-95 border-dashed border-[#c19c5c]"
+                          : isDragOver
+                          ? "border-[#c19c5c] ring-2 ring-[#c19c5c] scale-[1.02] shadow-md"
+                          : isFirst
+                          ? "border-[#c19c5c]/60 shadow-[#c19c5c]/5"
+                          : "border-black/10 dark:border-white/10"
+                      }`}
                     >
-                      <Eye className="w-3.5 h-3.5" /> Preview
-                    </a>
+                      <div className="flex items-center gap-3">
+                        <GripVertical className="w-4 h-4 text-black/40 dark:text-white/40 flex-shrink-0" />
+                        
+                        <div className="relative w-14 h-11 rounded-lg overflow-hidden bg-neutral-900 flex-shrink-0">
+                          <img src={proj.images?.[0] || "/placeholder.png"} alt={proj.title} className="w-full h-full object-cover" />
+                        </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleOpenEdit(proj)}
-                        className="p-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
-                        title="Edit Project"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold uppercase ${
+                              isFirst ? "bg-[#c19c5c] text-black font-extrabold" : "bg-black/10 dark:bg-white/10 text-black dark:text-white"
+                            }`}>
+                              #{globalIdx + 1} {isFirst && "★ TOP"}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#c19c5c] uppercase truncate">
+                              {proj.category}
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-bold text-black dark:text-white truncate">
+                            {proj.title}
+                          </h4>
+                        </div>
+                      </div>
 
-                      {deleteConfirmId === proj.id ? (
+                      <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+                        <div className="flex items-center gap-1">
+                          {globalIdx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveToTop(globalIdx)}
+                              className="px-2 py-0.5 rounded bg-[#c19c5c]/15 text-[#c19c5c] text-[9px] font-mono font-bold hover:bg-[#c19c5c]/25 transition-colors cursor-pointer"
+                              title="Make #1 Top"
+                            >
+                              Make #1
+                            </button>
+                          )}
+                          {globalIdx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveProject(globalIdx, -1)}
+                              className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                          )}
+                          {globalIdx < projects.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveProject(globalIdx, 1)}
+                              className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                              title="Move Down"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => handleDeleteProject(proj.id)}
-                            className="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold uppercase"
+                            type="button"
+                            onClick={() => handleOpenEdit(proj)}
+                            className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white"
+                            title="Edit"
                           >
-                            Confirm
+                            <Edit className="w-3 h-3" />
                           </button>
                           <button
-                            onClick={() => setDeleteConfirmId(null)}
-                            className="p-1 text-black/50 dark:text-white/50"
+                            type="button"
+                            onClick={() => setDeleteConfirmId(proj.id)}
+                            className="p-1.5 rounded text-red-500/80 hover:text-red-500"
+                            title="Delete"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirmId(proj.id)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors"
-                          title="Delete Project"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
+
+            {/* Lane 2: Selected Works (#4 - #6) */}
+            <div 
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={(e) => {
+                if (draggedItemIndex !== null && (draggedItemIndex < 3 || draggedItemIndex > 5)) {
+                  handleDrop(e, 3); // Drop to slot #4
+                }
+              }}
+              className="flex flex-col bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10 rounded-2xl p-4 sm:p-5"
+            >
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+                    Selected Works (#4 - #6)
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-black/70 dark:text-white/70 font-bold">
+                  {projects.slice(3, 6).length} / 3
+                </span>
+              </div>
+              <p className="text-[11px] text-black/50 dark:text-white/50 mb-4">
+                Core portfolio works displayed right after your hero spotlight.
+              </p>
+
+              <div className="flex flex-col gap-3 min-h-[140px]">
+                {projects.slice(3, 6).length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-black/10 dark:border-white/10 text-center text-[11px] font-mono text-black/40 dark:text-white/40 my-auto">
+                    Drag projects here to rank them as Selected Works (#4 - #6)
+                  </div>
+                ) : (
+                  projects.slice(3, 6).map((proj, i) => {
+                    const globalIdx = 3 + i;
+                    const isDragging = draggedItemIndex === globalIdx;
+                    const isDragOver = dragOverItemIndex === globalIdx;
+
+                    return (
+                      <div
+                        key={proj.id}
+                        draggable={true}
+                        onDragStart={(e) => handleDragStart(e, globalIdx)}
+                        onDragOver={(e) => handleDragOver(e, globalIdx)}
+                        onDrop={(e) => handleDrop(e, globalIdx)}
+                        onDragEnd={handleDragEnd}
+                        className={`p-3 rounded-xl border bg-white dark:bg-[#161619] flex flex-col gap-2.5 shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+                          isDragging
+                            ? "opacity-30 scale-95 border-dashed border-[#c19c5c]"
+                            : isDragOver
+                            ? "border-[#c19c5c] ring-2 ring-[#c19c5c] scale-[1.02] shadow-md"
+                            : "border-black/10 dark:border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <GripVertical className="w-4 h-4 text-black/40 dark:text-white/40 flex-shrink-0" />
+                          
+                          <div className="relative w-14 h-11 rounded-lg overflow-hidden bg-neutral-900 flex-shrink-0">
+                            <img src={proj.images?.[0] || "/placeholder.png"} alt={proj.title} className="w-full h-full object-cover" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold uppercase bg-black/10 dark:bg-white/10 text-black dark:text-white">
+                                #{globalIdx + 1}
+                              </span>
+                              <span className="text-[10px] font-mono text-[#c19c5c] uppercase truncate">
+                                {proj.category}
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-black dark:text-white truncate">
+                              {proj.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveToTop(globalIdx)}
+                              className="px-2 py-0.5 rounded bg-[#c19c5c]/15 text-[#c19c5c] text-[9px] font-mono font-bold hover:bg-[#c19c5c]/25 transition-colors cursor-pointer"
+                              title="Make #1 Top"
+                            >
+                              Make #1
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveProject(globalIdx, -1)}
+                              className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            {globalIdx < projects.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleMoveProject(globalIdx, 1)}
+                                className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(proj)}
+                              className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white"
+                              title="Edit"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmId(proj.id)}
+                              className="p-1.5 rounded text-red-500/80 hover:text-red-500"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Lane 3: Extended Portfolio (#7+) */}
+            <div 
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={(e) => {
+                if (draggedItemIndex !== null && draggedItemIndex < 6) {
+                  handleDrop(e, 6); // Drop to slot #7
+                }
+              }}
+              className="flex flex-col bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10 rounded-2xl p-4 sm:p-5"
+            >
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+                    Extended Portfolio (#7+)
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 text-black/70 dark:text-white/70 font-bold">
+                  {projects.slice(6).length}
+                </span>
+              </div>
+              <p className="text-[11px] text-black/50 dark:text-white/50 mb-4">
+                Additional works and case studies in your full catalog.
+              </p>
+
+              <div className="flex flex-col gap-3 min-h-[140px]">
+                {projects.slice(6).length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-black/10 dark:border-white/10 text-center text-[11px] font-mono text-black/40 dark:text-white/40 my-auto">
+                    {projects.length <= 6 
+                      ? "Add more projects to populate extended archive"
+                      : "Drag projects here to rank them as #7+"}
+                  </div>
+                ) : (
+                  projects.slice(6).map((proj, i) => {
+                    const globalIdx = 6 + i;
+                    const isDragging = draggedItemIndex === globalIdx;
+                    const isDragOver = dragOverItemIndex === globalIdx;
+
+                    return (
+                      <div
+                        key={proj.id}
+                        draggable={true}
+                        onDragStart={(e) => handleDragStart(e, globalIdx)}
+                        onDragOver={(e) => handleDragOver(e, globalIdx)}
+                        onDrop={(e) => handleDrop(e, globalIdx)}
+                        onDragEnd={handleDragEnd}
+                        className={`p-3 rounded-xl border bg-white dark:bg-[#161619] flex flex-col gap-2.5 shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+                          isDragging
+                            ? "opacity-30 scale-95 border-dashed border-[#c19c5c]"
+                            : isDragOver
+                            ? "border-[#c19c5c] ring-2 ring-[#c19c5c] scale-[1.02] shadow-md"
+                            : "border-black/10 dark:border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <GripVertical className="w-4 h-4 text-black/40 dark:text-white/40 flex-shrink-0" />
+                          
+                          <div className="relative w-14 h-11 rounded-lg overflow-hidden bg-neutral-900 flex-shrink-0">
+                            <img src={proj.images?.[0] || "/placeholder.png"} alt={proj.title} className="w-full h-full object-cover" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold uppercase bg-black/10 dark:bg-white/10 text-black dark:text-white">
+                                #{globalIdx + 1}
+                              </span>
+                              <span className="text-[10px] font-mono text-[#c19c5c] uppercase truncate">
+                                {proj.category}
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-black dark:text-white truncate">
+                              {proj.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveToTop(globalIdx)}
+                              className="px-2 py-0.5 rounded bg-[#c19c5c]/15 text-[#c19c5c] text-[9px] font-mono font-bold hover:bg-[#c19c5c]/25 transition-colors cursor-pointer"
+                              title="Make #1 Top"
+                            >
+                              Make #1
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveProject(globalIdx, -1)}
+                              className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            {globalIdx < projects.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleMoveProject(globalIdx, 1)}
+                                className="p-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 text-black/60 dark:text-white/60"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(proj)}
+                              className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white"
+                              title="Edit"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmId(proj.id)}
+                              className="p-1.5 rounded text-red-500/80 hover:text-red-500"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
           </div>
         )}
       </div>
@@ -852,16 +1520,22 @@ export default function AdminDashboard() {
                       </div>
                     </label>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-black/50 dark:text-white/50">
-                        Order:
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-black/70 dark:text-white/70 font-semibold">
+                          Index # (Rank):
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={formData.order}
+                          onChange={(e) => setFormData({ ...formData, order: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                          className="w-16 px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 text-black dark:text-white text-xs font-mono text-center focus:border-[#c19c5c] focus:outline-none font-bold text-[#c19c5c]"
+                        />
+                      </div>
+                      <span className="text-[9px] font-mono text-[#c19c5c]">
+                        #1 appears at top of portfolio
                       </span>
-                      <input
-                        type="number"
-                        value={formData.order}
-                        onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value, 10) || 0 })}
-                        className="w-16 px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 text-black dark:text-white text-xs font-mono text-center focus:border-[#c19c5c] focus:outline-none"
-                      />
                     </div>
                   </div>
 
