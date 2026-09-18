@@ -92,6 +92,7 @@ export default function AdminDashboard() {
   const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [orderSaveMessage, setOrderSaveMessage] = useState("");
+  const [uploadError, setUploadError] = useState("");
 
   // Close modal on Escape key
   useEffect(() => {
@@ -193,32 +194,50 @@ export default function AdminDashboard() {
 
     setUploadingImage(true);
     setActionError("");
+    setUploadError("");
     playClickSound();
 
-    const uploadFormData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      uploadFormData.append("files", files[i]);
-    }
-
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadFormData,
-      });
+      const newUrls = [];
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Image upload failed");
+      // Process files sequentially to respect Vercel's 4.5MB serverless payload limit
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
-      const newUrls = (data.files || []).map((f) => f.url);
+        if (file.size > 4.5 * 1024 * 1024) {
+          throw new Error(
+            `"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Vercel serverless functions limit uploads to 4.5MB per image. Please upload a compressed or smaller image.`
+          );
+        }
+
+        const uploadFormData = new FormData();
+        uploadFormData.append("files", file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Upload failed for "${file.name}"`);
+        }
+
+        const fileUrls = (data.files || []).map((f) => f.url);
+        newUrls.push(...fileUrls);
+      }
+
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...newUrls],
       }));
 
       playSuccessSound();
-      setActionSuccess(`Uploaded ${newUrls.length} image(s) to Cloudinary!`);
+      setActionSuccess(`Uploaded ${newUrls.length} image(s) to Cloudinary successfully!`);
     } catch (err) {
-      setActionError(err.message);
+      console.error("Cloudinary upload failed:", err);
+      setUploadError(err.message || "Failed to upload image to Cloudinary");
+      setActionError(err.message || "Failed to upload image to Cloudinary");
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -277,6 +296,7 @@ export default function AdminDashboard() {
     playClickSound();
     setIsEditing(false);
     setEditingId(null);
+    setUploadError("");
     setFormData({
       id: "",
       title: "",
@@ -298,6 +318,7 @@ export default function AdminDashboard() {
     playClickSound();
     setIsEditing(true);
     setEditingId(proj.id);
+    setUploadError("");
     setFormData({
       id: proj.id,
       title: proj.title || "",
@@ -1589,6 +1610,23 @@ export default function AdminDashboard() {
                   {/* Media Gallery / Cloudinary Photo Manager */}
                   <div className="p-4 sm:p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] flex flex-col gap-4">
                     
+                    {/* Upload Error Alert inside Modal */}
+                    {uploadError && (
+                      <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center justify-between animate-fade-in shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-medium">{uploadError}</span>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setUploadError("")} 
+                          className="hover:opacity-70 cursor-pointer p-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
                     {/* Media Header & Upload Button */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
