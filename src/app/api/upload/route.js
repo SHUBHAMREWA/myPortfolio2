@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/auth';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import sharp from 'sharp';
 
 export async function POST(request) {
   try {
@@ -31,13 +32,19 @@ export async function POST(request) {
       if (typeof file === 'string' || !file.name) continue;
 
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      const rawBuffer = Buffer.from(arrayBuffer);
 
-      const result = await uploadToCloudinary(buffer, 'portfolio/projects');
+      // 1. Compress & convert to WebP format using sharp (high compression, optimal web delivery)
+      const compressedWebpBuffer = await sharp(rawBuffer)
+        .webp({ quality: 80, effort: 4 })
+        .toBuffer();
+
+      // 2. Upload compressed WebP to Cloudinary in the "portfoliophoto" folder
+      const result = await uploadToCloudinary(compressedWebpBuffer, 'portfoliophoto');
       uploadResults.push({
         url: result.secure_url,
         publicId: result.public_id,
-        format: result.format,
+        format: result.format || 'webp',
         bytes: result.bytes,
       });
     }
@@ -51,7 +58,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `${uploadResults.length} file(s) uploaded successfully to Cloudinary`,
+      message: `${uploadResults.length} file(s) converted to WebP and uploaded to portfoliophoto successfully!`,
       files: uploadResults,
       // For single file convenience
       url: uploadResults[0].url,
