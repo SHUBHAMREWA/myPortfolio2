@@ -99,6 +99,16 @@ export async function POST(request) {
       parsedStack = stack.split(',').map(s => s.trim()).filter(Boolean);
     }
 
+    // Determine 1-based display order
+    let targetOrder = Number(order);
+    if (!targetOrder || targetOrder < 1) {
+      const highest = await Project.findOne({}).sort({ order: -1 }).select('order').lean();
+      targetOrder = (highest?.order || 0) + 1;
+    } else if (targetOrder === 1) {
+      // Bumping existing projects down if new project is assigned #1
+      await Project.updateMany({ order: { $gte: 1 } }, { $inc: { order: 1 } });
+    }
+
     const newProject = await Project.create({
       id: cleanId,
       title: title.trim(),
@@ -110,7 +120,7 @@ export async function POST(request) {
       stack: parsedStack,
       images,
       featured: featured !== undefined ? Boolean(featured) : true,
-      order: Number(order) || 0,
+      order: targetOrder,
     });
 
     return NextResponse.json(
