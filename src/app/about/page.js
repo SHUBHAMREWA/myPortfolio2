@@ -58,7 +58,7 @@ export default function About() {
         {/* Photo Card */}
         <div className="bg-black rounded-3xl overflow-hidden relative min-h-[400px] lg:min-h-full group">
           <img 
-            src="/profile.png" 
+            src="https://shubham-website-black.vercel.app/profileimg.jpeg" 
             alt="Profile Photo"
             className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700 group-hover:scale-105 ease-out"
           />
