@@ -1,13 +1,33 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Download, ArrowRight, Mail, Code, Terminal, Database, Server, Layers, Globe, Zap, CPU } from "lucide-react";
 import { BsOpenai, BsClaude } from "react-icons/bs";
 import { SiGooglegemini, SiN8N, SiReact, SiNextdotjs, SiNodedotjs, SiExpress, SiMongodb, SiTypescript, SiJavascript, SiTailwindcss, SiRedux, SiHtml5, SiCss3, SiVercel, SiNetlify, SiGit, SiJira } from "react-icons/si";
 import { useAudio } from "@/context/AudioContext";
 
+const DEFAULT_RESUME_URL = "https://drive.google.com/file/d/1enBo2Ozt8SKulZxdxmWDVa1Mf5PQOxAI/view?usp=sharing";
+
 export default function About() {
   const { playClickSound, playHoverSound } = useAudio();
+  const [resumeUrl, setResumeUrl] = useState(DEFAULT_RESUME_URL);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.resumeUrl) {
+            setResumeUrl(json.data.resumeUrl);
+          }
+        }
+      } catch (err) {
+        // Silently use default fallback
+      }
+    }
+    fetchSettings();
+  }, []);
 
   return (
     <div className="w-full relative z-10 min-h-screen pt-32 pb-24 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-6">
@@ -293,14 +313,17 @@ export default function About() {
                 Also active on these platforms :<br/>(Click to visit)
               </p>
             </div>
-            <div className="flex gap-4">
-              <a href="https://www.linkedin.com/in/shubham-kushwaha-rewa17/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 transition-colors">
+            <div className="flex gap-4 items-center">
+              <a href="https://shubhamindia.vercel.app/about" target="_blank" rel="noopener noreferrer" title="Portfolio" className="text-[#c19c5c] hover:opacity-80 transition-opacity">
+                <Globe className="w-6 h-6" />
+              </a>
+              <a href="https://www.linkedin.com/in/shubham-kushwaha-rewa17/" target="_blank" rel="noopener noreferrer" title="LinkedIn" className="text-blue-600 hover:text-blue-800 transition-colors">
                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
-              <a href="https://github.com/SHUBHAMREWA" target="_blank" rel="noopener noreferrer" className="text-black dark:text-white hover:opacity-70 transition-opacity">
+              <a href="https://github.com/SHUBHAMREWA" target="_blank" rel="noopener noreferrer" title="GitHub" className="text-black dark:text-white hover:opacity-70 transition-opacity">
                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
               </a>
-              <a href="mailto:shubhamrewamp17@gmail.com" className="text-red-500 hover:text-red-700 transition-colors">
+              <a href="mailto:shubhamrewamp17@gmail.com" title="Email" className="text-red-500 hover:text-red-700 transition-colors">
                 <Mail className="w-6 h-6" />
               </a>
             </div>
@@ -352,7 +375,7 @@ export default function About() {
 
           {/* Download Resume */}
           <a 
-            href="https://drive.google.com/file/d/1enBo2Ozt8SKulZxdxmWDVa1Mf5PQOxAI/view?usp=sharing"
+            href={resumeUrl}
             target="_blank"
             rel="noopener noreferrer"
             onMouseEnter={playHoverSound}

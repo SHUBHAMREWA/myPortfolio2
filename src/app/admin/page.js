@@ -38,6 +38,7 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpToLine,
+  Download,
 } from "lucide-react";
 import { TbCircleLetterS } from "react-icons/tb";
 
@@ -59,6 +60,13 @@ export default function AdminDashboard() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
+
+  // Resume & Site Settings state
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [loadingResume, setLoadingResume] = useState(true);
+  const [savingResume, setSavingResume] = useState(false);
+  const [resumeSuccess, setResumeSuccess] = useState("");
+  const [resumeError, setResumeError] = useState("");
 
   // Modal / Form state
   const [modalOpen, setModalOpen] = useState(false);
@@ -117,6 +125,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         setAdminUser(data.user);
         fetchProjects();
+        fetchSettings();
       } catch (err) {
         router.replace("/login");
       } finally {
@@ -139,6 +148,62 @@ export default function AdminDashboard() {
       setActionError("Failed to load projects from database.");
     } finally {
       setLoadingProjects(false);
+    }
+  };
+
+  // 3. Fetch Settings (Resume link)
+  const fetchSettings = async () => {
+    setLoadingResume(true);
+    try {
+      const res = await fetch("/api/settings");
+      const json = await res.json();
+      if (json?.data?.resumeUrl) {
+        setResumeUrl(json.data.resumeUrl);
+      }
+    } catch (err) {
+      console.error("Failed to load settings:", err);
+    } finally {
+      setLoadingResume(false);
+    }
+  };
+
+  // 4. Save Resume Link
+  const handleSaveResume = async (e) => {
+    if (e) e.preventDefault();
+    if (!resumeUrl || !resumeUrl.trim()) {
+      setResumeError("Please provide a valid resume link URL.");
+      return;
+    }
+    const cleanUrl = resumeUrl.trim();
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      setResumeError("Resume URL must start with http:// or https://");
+      return;
+    }
+
+    setSavingResume(true);
+    setResumeError("");
+    setResumeSuccess("");
+    playClickSound();
+
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeUrl: cleanUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update resume link");
+
+      playSuccessSound();
+      setResumeSuccess("Download Resume link updated successfully!");
+      if (data.data?.resumeUrl) {
+        setResumeUrl(data.data.resumeUrl);
+      }
+      setTimeout(() => setResumeSuccess(""), 4000);
+    } catch (err) {
+      setResumeError(err.message);
+    } finally {
+      setSavingResume(false);
     }
   };
 
@@ -612,6 +677,103 @@ export default function AdminDashboard() {
             <Database className="w-5 h-5" /> MongoDB
           </div>
         </div>
+      </div>
+
+      {/* Resume Link & Asset Settings */}
+      <div className="bg-white/70 dark:bg-[#111113]/70 backdrop-blur-2xl border border-black/10 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl mb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-black/5 dark:border-white/5">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#c19c5c]" /> Resume &amp; Asset Configuration
+              </h2>
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">
+                Live on About Page
+              </span>
+            </div>
+            <p className="text-xs text-black/50 dark:text-white/50">
+              Configure the download link for your Resume. When users click <span className="font-semibold text-black dark:text-white">&ldquo;Download Resume&rdquo;</span> on your portfolio, they will download or open this document.
+            </p>
+          </div>
+        </div>
+
+        {/* Resume Notifications */}
+        {resumeSuccess && (
+          <div className="mb-5 p-3.5 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 flex-shrink-0" />
+              <span>{resumeSuccess}</span>
+            </div>
+            <button onClick={() => setResumeSuccess("")}><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
+
+        {resumeError && (
+          <div className="mb-5 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{resumeError}</span>
+            </div>
+            <button onClick={() => setResumeError("")}><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveResume} className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1">
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 pointer-events-none">
+                <Link2 className="w-4 h-4" />
+              </div>
+              <input
+                type="url"
+                value={resumeUrl}
+                onChange={(e) => setResumeUrl(e.target.value)}
+                placeholder="https://drive.google.com/file/d/... or https://res.cloudinary.com/..."
+                disabled={loadingResume || savingResume}
+                className="w-full pl-10 pr-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-black/10 dark:border-white/10 rounded-xl text-xs sm:text-sm font-mono text-black dark:text-white placeholder:text-black/30 dark:placeholder:text-white/30 focus:outline-none focus:border-[#c19c5c] focus:ring-1 focus:ring-[#c19c5c] transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {resumeUrl && (
+                <a
+                  href={resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onMouseEnter={playHoverSound}
+                  onClick={playClickSound}
+                  className="px-4 py-3 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-xs font-mono font-bold text-black dark:text-white flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  title="Test link in new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-[#c19c5c]" />
+                  <span>Test Link</span>
+                </a>
+              )}
+
+              <button
+                type="submit"
+                disabled={savingResume || loadingResume}
+                onMouseEnter={playHoverSound}
+                className="px-5 py-3 rounded-xl bg-[#c19c5c] hover:bg-[#b08b4b] text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-[#c19c5c]/10 disabled:opacity-50 cursor-pointer"
+              >
+                {savingResume ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Resume Link</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <p className="text-[11px] font-mono text-black/40 dark:text-white/40">
+            Supports Google Drive share links, Cloudinary PDFs, Dropbox, AWS S3, or direct URL links.
+          </p>
+        </form>
       </div>
 
       {/* Projects List Section */}

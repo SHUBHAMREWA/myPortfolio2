@@ -107,6 +107,16 @@ export default function Footer() {
           </span>
           <div className="flex flex-col gap-y-4">
             <a 
+              href="https://shubhamindia.vercel.app/about" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={playClickSound} 
+              onMouseEnter={playHoverSound} 
+              className="text-xs font-bold tracking-[0.2em] text-black/70 dark:text-white/70 hover:text-[#c19c5c] transition-colors uppercase"
+            >
+              PORTFOLIO
+            </a>
+            <a 
               href="https://linkedin.com/in/shubham-kushwaha-rewa17" 
               target="_blank" 
               rel="noopener noreferrer" 
